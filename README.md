@@ -14,7 +14,7 @@ create_team
 add_favorite  
 remove_favorite  
 create_game  
-play_game — game loop with helper functino initiate_round (?)  
+play_game — game loop with helper function initiate_round (?)  
 update_leaderboard  
 
 ## Models ?  

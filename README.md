@@ -15,6 +15,9 @@ add_favorite
 remove_favorite  
 create_game  
 play_game  
-   initiate_round (?)  
+> initiate_round (?)  
 update_leaderboard  
 
+## Models ?  
+game model (includes leaderboard)  
+team model  

@@ -8,3 +8,13 @@ Features
    •  Program creates game itself based on team's preffered category
 4. Play game
 5. Keep track of game score via leaderboard
+
+## Functions (broad)
+create_team  
+add_favorite  
+remove_favorite  
+create_game  
+play_game  
+   initiate_round (?)
+update_leaderboard  
+

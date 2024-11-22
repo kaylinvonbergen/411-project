@@ -15,6 +15,6 @@ add_favorite
 remove_favorite  
 create_game  
 play_game  
-   initiate_round (?)
+   initiate_round (?)  
 update_leaderboard  
 

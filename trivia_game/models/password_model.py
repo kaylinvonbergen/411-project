@@ -18,7 +18,6 @@ configure_logger(logger)
 @dataclass
 class User:
     username: str
-    salt: str
     password_hash: str
 
 

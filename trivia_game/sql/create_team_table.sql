@@ -4,6 +4,7 @@ CREATE TABLE teams (
     team TEXT NOT NULL UNIQUE,
     current_score INTEGER DEFAULT 0,
     favorite_game_category INTEGER,
-    deleted BOOLEAN DEFAULT FALSE
+    deleted BOOLEAN DEFAULT FALSE,
+    password_hash TEXT NOT NULL,
     FOREIGN KEY (favorite_game_category) REFERENCES categories(id)
 );

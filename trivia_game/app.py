@@ -6,5 +6,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-playlist_model = PlaylistModel()
+
+
 

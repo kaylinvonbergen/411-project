@@ -22,8 +22,8 @@ game model (includes leaderboard)
 team model  
 
 ## Calls 
-get categories
-get question
-session tokens
-category question count lookup
+get categories  
+get question  
+session tokens  
+category question count lookup  
 global question count lookup

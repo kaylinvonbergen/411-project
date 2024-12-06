@@ -6,10 +6,9 @@ class Team:
         """
         Initialize a new Team instance.
         """
-        self.team_id = Team.team_counter
-        Team.team_counter += 1  # Increment counter for unique team IDs
-        self.team_name = team_name
-        self.members = members  # List of strings
+        self.id = Team.counter
+        Team.counter += 1  # Increment counter for unique team IDs
+        self.name = name
         self.favorite_categories = []  # Start with no favorite categories
         self.games_played = []  # List of game IDs
         self.total_score = 0  # Initialize total score to 0
@@ -51,9 +50,8 @@ class Team:
         String representation of the Team object.
         """
         return (
-            f"Team ID: {self.team_id}\n"
-            f"Team Name: {self.team_name}\n"
-            f"Members: {', '.join(self.members)}\n"
+            f"Team ID: {self.id}\n"
+            f"Team Name: {self.name}\n"
             f"Favorite Categories: {', '.join(self.favorite_categories)}\n"
             f"Games Played: {', '.join(map(str, self.games_played))}\n"
             f"Total Score: {self.total_score}\n"

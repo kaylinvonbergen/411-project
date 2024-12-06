@@ -1,4 +1,13 @@
- class GameModel:
+from models.team_model import * 
+from utils.logger import *
+from typing import List
+
+
+logger = logging.getLogger(__name__)
+configure_logger(logger)
+
+
+class GameModel:
     """
     A class to manage games between teams.
 
@@ -17,6 +26,25 @@
         Initializes the GameModel object with an empty list of combatants
         """
         self.opponents: List[Team] = []
+
+    def get_result(self, opponent: Team, answer) -> float:
+        """
+        Determines the correctness of a team based on their answer as compared to the correct answer
+
+        Args:
+		    opponent (Team): the opponent to judge
+
+        Returns:
+		    boolean: True if correct, False otherwise 
+        """
+        result = False #to be returned.
+        
+        # logic to take in input & change result to true or false based on if they got it right
+
+        # Log the calculated score
+        logger.info("Result for %s: %.3f", opponent.name, result)
+
+        return result
 
     def game(self) -> str:
         """
@@ -59,13 +87,13 @@
             logger.info("The winner is: %s", winner.name)
             update_team_stats(winner.id, 'win')
             update_team_stats(loser.id, 'loss')
-        else if not score_1 and score_2:
+        elif not score_1 and score_2:
             winner = opponent_2
             loser = opponent_1
             logger.info("The winner is: %s", winner.name)
             update_team_stats(winner.id, 'win')
             update_team_stats(loser.id, 'loss')
-        else if :
+        else:
             if score_1:
                 result_s = "correct"
                 update_team_stats(opponent_1.id, 'win')
@@ -74,7 +102,7 @@
                 result_s = "incorrect" 
                 update_team_stats(opponent_1.id, 'loss')
                 update_team_stats(opponent_2.id, 'loss')
-            logger.info("There was a tie between %s & %s. Both teams were %s." opponent_1, opponent_2, result_s )
+            logger.info("There was a tie between %s & %s. Both teams were %s.", opponent_1, opponent_2, result_s )
 
 
         return winner.name #???
@@ -86,24 +114,7 @@
         logger.info("Clearing the opponents list.")
         self.oponents.clear()
 
-    def get_result(self, opponent: Team, answer) -> float:
-        """
-        Determines the correctness of a team based on their answer as compared to the correct answer
-
-        Args:
-		    opponent (Team): the opponent to judge
-
-        Returns:
-		    boolean: True if correct, False otherwise 
-        """
-        result = False #to be returned.
-        
-        # logic to take in input & change result to true or false based on if they got it right
-
-        # Log the calculated score
-        logger.info("Result for %s: %.3f", opponent.name, result)
-
-        return result
+    
 
     def get_opponents(self) -> List[Team]:
         """

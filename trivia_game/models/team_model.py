@@ -9,7 +9,6 @@ class Team:
         self.id = Team.counter
         Team.counter += 1  # Increment counter for unique team IDs
         self.name = name
-        self.members = members  # List of strings
         self.favorite_categories = []  # Start with no favorite categories
         self.games_played = []  # List of game IDs
         self.total_score = 0  # Initialize total score to 0
@@ -53,7 +52,6 @@ class Team:
         return (
             f"Team ID: {self.id}\n"
             f"Team Name: {self.name}\n"
-            f"Members: {', '.join(self.members)}\n"
             f"Favorite Categories: {', '.join(self.favorite_categories)}\n"
             f"Games Played: {', '.join(map(str, self.games_played))}\n"
             f"Total Score: {self.total_score}\n"

@@ -2,6 +2,20 @@ from models.team_model import *
 from utils.logger import *
 from typing import List
 
+from dataclasses import dataclass
+import logging
+import os
+import sqlite3
+from typing import Any
+import requests
+import html
+import aiohttp
+import asyncio
+
+
+from utils.sql_utils import get_db_connection
+from utils.logger import configure_logger
+
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
@@ -21,11 +35,22 @@ class GameModel:
     which generates 1 trivia question in general knowledge, easy difficulty, multiple choice, default encoding.
     '''
 
+    rounds = 0 
+
     def __init__(self):
         """
         Initializes the GameModel object with an empty list of combatants
         """
         self.opponents: List[Team] = []
+
+    def display_score(self):
+        """
+        Displays current scores
+        """
+        logger.info("current score is: %s: %s points")
+        logger.info(" %s: %s points", self.opponents[0].name, self.opponents[0].current_score)
+        logger.info(" %s: %s points", self.opponents[1].name, self.opponents[1].current_score)
+
 
     def get_result(self, opponent: Team, answer) -> float:
         """
@@ -33,16 +58,15 @@ class GameModel:
 
         Args:
 		    opponent (Team): the opponent to judge
+            answer (String): the correct answer to the question
 
         Returns:
 		    boolean: True if correct, False otherwise 
         """
-        result = False #to be returned.
-        
-        # logic to take in input & change result to true or false based on if they got it right
+        teamanswer = input("Please enter your answer: ")
+        result = answer = teamanswer
 
-        # Log the calculated score
-        logger.info("Result for %s: %.3f", opponent.name, result)
+        
 
         return result
 
@@ -68,44 +92,77 @@ class GameModel:
 
         # Log the start of the game
         logger.info("Game started between %s and %s", opponent_1.name, opponent_2.name)
+        logger.info("Getting question 1 of this round from Open Trivia")
 
-        # API CALLS GO HERE, REPLACE ANSWER, DETERMINE HOW WE CALL API.. UTILS?
-        answer = "answer"
+        for i in range(0,1):
+            try:
+                logger.info("Getting question %s of this round from Open Trivia", i)
+                api_url = f'https://opentdb.com/api.php?amount=1&category={category}&type=multiple'
+                
+                # Fetch the data from the API
+                response = requests.get(api_url)
+                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
 
-        #Determine if the teams entered the correct answer (store true or false below)
-        score_1 = get_result(opponent_1, answer)
-        score_2 = get_result(opponent_2, answer)
+                # Parse the JSON response
+                data = response.json()
 
-        # Log this
-        logger.info("Score for %s: %.3f", opponent_1.name, score_1)
-        logger.info("Score for %s: %.3f", opponent_2.name, score_2)
+                # Check if the response contains valid questions
+                if data['response_code'] != 0:
+                    raise ValueError("No trivia questions available for the specified category.")
+                
+                # Extract and decode the question and answer
+                question_data = data['results'][0]
+                question = html.unescape(question_data['question'])
+                answer = html.unescape(question_data['correct_answer'])
 
-        # Determine win/tie, update stats and log
-        if score_1 and not score_2:
-            winner = opponent_1
-            loser = opponent_2
-            logger.info("The winner is: %s", winner.name)
-            update_team_stats(winner.id, 'win')
-            update_team_stats(loser.id, 'loss')
-        elif not score_1 and score_2:
-            winner = opponent_2
-            loser = opponent_1
-            logger.info("The winner is: %s", winner.name)
-            update_team_stats(winner.id, 'win')
-            update_team_stats(loser.id, 'loss')
-        else:
-            if score_1:
-                result_s = "correct"
-                update_team_stats(opponent_1.id, 'win')
-                update_team_stats(opponent_2.id, 'win')
+                
+            
+            except requests.exceptions.RequestException as e:
+                logger.error("Error fetching trivia data")
+                raise ValueError("Error fetching trivia data")
+                return None, None
+                
+            except ValueError as ve:
+                raise ValueError("Error fetching trivia data")
+                return None, None
+            
+            
+            
+            logger.info(f"TEAM 1: Question: {question}")
+            score_1 = get_result(opponent_1, answer)
+            logger.info(f"TEAM 2: Question: {question}")
+            score_2 = get_result(opponent_2, answer)
+            
+
+            # Log this
+            logger.info("Score for %s: %.3f", opponent_1.name, score_1)
+            logger.info("Score for %s: %.3f", opponent_2.name, score_2)
+
+            # Determine win/tie, update stats and log
+            if score_1 and not score_2:
+                winner = opponent_1
+                loser = opponent_2
+                logger.info("The winner is: %s", winner.name)
+                winner.team_score += 1
+            elif not score_1 and score_2:
+                winner = opponent_2
+                loser = opponent_1
+                logger.info("The winner is: %s", winner.name)
+                winner.team_score += 1
             else:
-                result_s = "incorrect" 
-                update_team_stats(opponent_1.id, 'loss')
-                update_team_stats(opponent_2.id, 'loss')
-            logger.info("There was a tie between %s & %s. Both teams were %s.", opponent_1, opponent_2, result_s )
+                if score_1:
+                    result_s = "correct"
+                    opponent_1.team_score += 1
+                    opponent_2.team_score += 1
+                else:
+                    result_s = "incorrect" 
+                    logger.info("There was a tie between %s & %s. Both teams were %s.", opponent_1, opponent_2, result_s )
+            rounds +=1
+            display_score()
 
-
-        return winner.name #???
+        opponent_1.games_played += 1
+        opponent_2.games_played += 1
+        return True #game successfull
 
     def clear_opponents(self):
         """
@@ -145,3 +202,8 @@ class GameModel:
 
         # Log the current state of opponents
         logger.info("Current opponents list: %s", [opponent.name for opponent in self.opponents])
+    
+    def display_score(self):
+        logger.info("current score is: %s: %s points")
+        logger.info(" %s: %s points", self.opponents[0].name, self.opponents[0].current_score)
+        logger.info(" %s: %s points", self.opponents[1].name, self.opponents[1].current_score)

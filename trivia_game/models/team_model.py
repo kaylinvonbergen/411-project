@@ -17,7 +17,7 @@ configure_logger(logger)
 class Team:
     """
      
-    Represents a team and its associated attributes, inlcuding id, meal, cuisine, price, and difficulty
+    Represents a team and its associated attributes, inlcuding id, team, cuisine, price, and difficulty
 
     Attributes:
     id (int): The id of the team 
@@ -31,7 +31,7 @@ class Team:
     """
 
     id: int
-    name: str
+    team: str
     favorite_categories: list[int]
     games_played: int
     total_score: int
@@ -59,16 +59,16 @@ def get_random_dog_image() -> str:
         return "https://images.dog.ceo/breeds/shiba/shiba-16.jpg"  # Fallback in case of error
 
 
-def create_team(name: str, favorite_categories: list[int]) -> None:
+def create_team(team: str, favorite_categories: list[int]) -> None:
     """
     Adds a new team with specified details to the database 
 
     Args:
-    name (str): The string name of the team 
+    team (str): The string team of the team 
     favorite_categories (int list): list of id's for team's favorite categories
 
     Raises:
-        ValueError: If another team with this name already exists 
+        ValueError: If another team with this team already exists 
         sqlite3.Error: If any database error occurs.
     """
     try:
@@ -78,16 +78,16 @@ def create_team(name: str, favorite_categories: list[int]) -> None:
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO teams (name, favorite_categories, mascot)
+                INSERT INTO teams (team, favorite_categories, mascot)
                 VALUES (?, ?, ?)
-            """, (name, favorite_categories, mascot_image_url))
+            """, (team, favorite_categories, mascot_image_url))
             conn.commit()
 
-            logger.info("Team successfully added to the database: %s", name)
+            logger.info("Team successfully added to the database: %s", team)
 
     except sqlite3.IntegrityError:
-        logger.error("Duplicate team name: %s", name)
-        raise ValueError(f"Team with name '{name}' already exists")
+        logger.error("Duplicate team team: %s", team)
+        raise ValueError(f"Team with team '{team}' already exists")
 
     except sqlite3.Error as e:
         logger.error("Database error: %s", str(e))
@@ -122,6 +122,78 @@ def delete_team(team_id: int) -> None:
             conn.commit()
 
             logger.info("Team with ID %s marked as deleted.", team_id)
+
+    except sqlite3.Error as e:
+        logger.error("Database error: %s", str(e))
+        raise e
+    
+
+def get_team_by_id(team_id: int) -> Team:
+    """
+    Retrieves a team from the database by its team id 
+
+    Args:
+        team_id (int): The unique id of the team to be retrieved 
+
+    Returns: 
+        Team: The team class instance asscoiated with the 'team_id' given
+
+    Raises: 
+        ValueError: If the team is marked as deleted or no team exists with the given 'team_id'
+        sqlite3.Error: If any database error occurs.
+
+    """
+
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, team, favorite_categories, mascot, deleted FROM teams WHERE id = ?", (team_id,))
+            row = cursor.fetchone()
+
+            if row:
+                if row[5]:
+                    logger.info("Team with ID %s has been deleted", team_id)
+                    raise ValueError(f"Team with ID {team_id} has been deleted")
+                return Team(id=row[0], team=row[1], favorite_categories=row[2], mascot=row[3])
+            else:
+                logger.info("Team with ID %s not found", team_id)
+                raise ValueError(f"Team with ID {team_id} not found")
+
+    except sqlite3.Error as e:
+        logger.error("Database error: %s", str(e))
+        raise e
+
+
+def get_team_by_name(team_name: str) -> Team:
+    """
+    Retrieves a team from the database based on the given team name
+
+    Args:
+        team_name (str): The team of the team to be retrieved 
+
+    Returns:
+        Team: The team class instance asscoiated with the 'team_id' given
+
+    Raises: 
+        ValueError: If the team is marked as deleted or no team exists with the given name 
+        sqlite3.Error: If any database error occurs.
+
+    """
+
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, team, cuisine, price, difficulty, deleted FROM teams WHERE team = ?", (team_name,))
+            row = cursor.fetchone()
+
+            if row:
+                if row[5]:
+                    logger.info("Team with name %s has been deleted", team_name)
+                    raise ValueError(f"Team with name {team_name} has been deleted")
+                return Team(id=row[0], team=row[1], favorite_categories=row[2], mascot=row[3])
+            else:
+                logger.info("Team with name %s not found", team_name)
+                raise ValueError(f"Team with name {team_name} not found")
 
     except sqlite3.Error as e:
         logger.error("Database error: %s", str(e))

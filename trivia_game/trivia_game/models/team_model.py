@@ -58,6 +58,74 @@ def get_random_dog_image() -> str:
         logger.error("Error fetching dog image: %s", e)
         return "https://images.dog.ceo/breeds/shiba/shiba-16.jpg"  # Fallback in case of error
 
+def fetch_trivia_categories() -> list[dict[str, Any]]:
+        """
+        Fetch an exhaustive list of trivia categories from the OpenTDB API.
+
+        Returns:
+            list[dict[str, Any]]: A list of categories, each with an 'id' and 'name'.
+
+        Raises:
+            RuntimeError: If there is an error fetching categories from the API.
+        """
+        try:
+            logger.info("Fetching trivia categories from the OpenTDB API.")
+            response = requests.get("https://opentdb.com/api_category.php")
+            response.raise_for_status()
+            data = response.json()
+            logger.info("Successfully fetched trivia categories.")
+            return data.get("trivia_categories", [])
+        except requests.exceptions.RequestException as e:
+            logger.error("Failed to fetch trivia categories: %s", str(e))
+            raise RuntimeError(f"Failed to fetch trivia categories: {e}")
+            
+def update_favorite_category(self) -> None:
+        """
+        Prompt the user to select favorite categories for the team.
+
+        Adds the chosen category IDs to the team's `favorite_categories` attribute.
+        """
+        try:
+            categories = self.fetch_trivia_categories()
+            if not categories:
+                logger.warning("No categories available to choose from.")
+                print("No categories available.")
+                return
+
+            # Display the categories
+            logger.info("Displaying available trivia categories to the user.")
+            print("Available Categories:")
+            for category in categories:
+                print(f"ID: {category['id']} - Name: {category['name']}")
+
+            # User selects favorite categories
+            while True:
+                try:
+                    category_id = int(input("Enter the ID of your favorite category (or -1 to finish): "))
+                    if category_id == -1:
+                        logger.info("User finished selecting favorite categories.")
+                        break
+
+                    category_ids = {cat["id"] for cat in categories}
+                    if category_id not in category_ids:
+                        print(f"Invalid category ID {category_id}. Please try again.")
+                        logger.warning("User entered an invalid category ID: %s", category_id)
+                        continue
+
+                    if category_id in self.favorite_categories:
+                        print(f"Category ID {category_id} is already a favorite.")
+                        logger.info("Category ID %s is already in the favorites list.", category_id)
+                    else:
+                        self.favorite_categories.append(category_id)
+                        print(f"Category ID {category_id} added to favorites.")
+                        logger.info("Category ID %s added to the favorites list.", category_id)
+                except ValueError:
+                    print("Invalid input. Please enter a valid category ID.")
+                    logger.warning("User entered an invalid input (non-integer).")
+
+        except RuntimeError as e:
+            print("Error fetching trivia categories.")
+            logger.error("Error in fetching categories: %s", str(e))
 
 def create_team(team: str, favorite_categories: list[int]) -> None:
     """

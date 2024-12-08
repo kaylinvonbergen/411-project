@@ -35,15 +35,46 @@ class GameModel:
         """
         Initializes the GameModel object with an empty list of combatants
         """
+        logger.info("Getting session token")
+        url = "https://opentdb.com/api_token.php?command=request"
         self.opponents: List[Team] = []
+        self.session_token: str = ""
+        response = requests.get(url)
+        data = response.json()
+        
+        if data['response_code'] == 0:  # Token generated successfully
+            session_token = data['token']
+        else:
+            logger.error("Failed to get session token :(")
+            raise Exception(f"Error fetching session key: {data['response_message']}")
 
-    def display_score(self):
-        """
-        Displays current scores
-        """
-        logger.info("current score is: %s: %s points")
-        logger.info(" %s: %s points", self.opponents[0].name, self.opponents[0].current_score)
-        logger.info(" %s: %s points", self.opponents[1].name, self.opponents[1].current_score)
+
+def display_score(self):
+    """
+    Displays current scores and logs trivia stats.
+    """
+    # Log current scores
+    logger.info("Current score is:")
+    logger.info(" %s: %s points", self.opponents[0].name, self.opponents[0].current_score)
+    logger.info(" %s: %s points", self.opponents[1].name, self.opponents[1].current_score)
+
+    # Fetch trivia stats from /api/trivia/stats
+    try:
+        response = requests.get("https://opentdb.com/api_category.php")
+        response.raise_for_status()  # Check for HTTP errors
+        categories = response.json().get('trivia_categories', [])
+        
+        # Convert stats to a string and log
+        if categories:
+            stats_string = ", ".join([f"{category['name']} (ID: {category['id']})" for category in categories])
+            logger.info("Available Trivia Categories: %s", stats_string)
+        else:
+            logger.warning("No trivia categories available to log.")
+
+    except requests.exceptions.RequestException as e:
+        logger.error("Failed to fetch trivia stats: %s", str(e))
+
+        
 
 
     def get_result(self, opponent: Team, answer) -> float:
@@ -100,8 +131,10 @@ class GameModel:
             category = favorite_categories[i]
             try:
                 logger.info("Getting question %s of this round from Open Trivia", i)
-                api_url = f'https://opentdb.com/api.php?amount=1&category={category}&type=multiple'
-                
+                if i == 0:
+                    api_url = f'https://opentdb.com/api.php?amount=1&category={category}&type=multiple&token={self.session_token}'
+                if i == 1: 
+                    api_url = f'https://opentdb.com/api.php?amount=1&category={category}&type=boolean&token={self.session_token}'
                 # Fetch the data from the API
                 response = requests.get(api_url)
                 response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
@@ -206,7 +239,4 @@ class GameModel:
         # Log the current state of opponents
         logger.info("Current opponents list: %s", [opponent.name for opponent in self.opponents])
     
-    def display_score(self):
-        logger.info("current score is: %s: %s points")
-        logger.info(" %s: %s points", self.opponents[0].name, self.opponents[0].current_score)
-        logger.info(" %s: %s points", self.opponents[1].name, self.opponents[1].current_score)
+

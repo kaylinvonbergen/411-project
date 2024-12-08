@@ -451,16 +451,12 @@ def clear_opponents():
         """
         Route to clear the opponents in the current game.
 
-        Returns:
-            JSON response indicating success or an error message.
-        """
-        try:
-            game_model.clear_opponents()
-            return make_response(jsonify({'status': 'success', 'message': 'Opponents cleared'}), 200)
-        
-        except Exception as e:
-            return make_response(jsonify({'error': 'Internal server error'}), 500)
-
-
-
+    Returns:
+        JSON response indicating success or an error message.
+    """
+    try:
+        game_model.clear_opponents()
+        return make_response(jsonify({'status': 'success', 'message': 'Opponents cleared'}), 200)
     
+    except Exception as e:
+        return make_response(jsonify({'error': 'Internal server error'}), 500)

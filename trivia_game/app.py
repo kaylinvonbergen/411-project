@@ -6,6 +6,7 @@ from config import ProductionConfig
 
 
 from trivia_game.models.password_model import *
+from trivia_game.models.team_model import *
 from trivia_game.db import db
 
 # Load environment variables from .env file
@@ -180,9 +181,190 @@ def create_app(config_class=ProductionConfig):
         except Exception as e:
             app.logger.error("Error during logout for username %s: %s", username, str(e))
             return jsonify({"error": "An unexpected error occurred."}), 500
+        
+
+    
+    ##########################################################
+    #
+    # Teams
+    #
+    ##########################################################
+
+
+@app.route('/random-dog')
+def random_dog():
+    try:
+        # Call the model function to get a random dog image URL
+        dog_image_url = get_random_dog_image()
+        return jsonify({"dog_image_url": dog_image_url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/api/create-team', methods=['POST'])
+def add_team() -> Response:
+    """
+    Route to add a new team to the database.
+
+    Expected JSON Input:
+        - team (str): The name of the team.
+        - favorite_categories (list[int]): List of category IDs for the team's favorite categories.
+
+    Returns:
+        JSON response indicating the success of the team addition.
+    Raises:
+        400 error if input validation fails.
+        500 error if there is an issue adding the team to the database.
+    """
+    app.logger.info('Creating new team')
+    try:
+        # Get the JSON data from the request
+        data = request.get_json()
+
+        # Extract and validate required fields
+        team = data.get('team')
+        favorite_categories = data.get('favorite_categories')
+
+        if not team or not isinstance(favorite_categories, list) or not all(isinstance(cat, int) for cat in favorite_categories):
+            return make_response(jsonify({'error': 'Invalid input, all fields are required with valid values'}), 400)
+
+        # Call the create_team function to add the team to the database
+        app.logger.info('Adding team: %s, %s', team, favorite_categories)
+        create_team(team, favorite_categories)
+
+        app.logger.info("Team added: %s", team)
+        return make_response(jsonify({'status': 'success', 'team': team}), 201)
+    
+    except ValueError as e:
+        app.logger.error("Failed to add team: %s", str(e))
+        return make_response(jsonify({'error': str(e)}), 400)
+    
+    except Exception as e:
+        app.logger.error("Failed to add team: %s", str(e))
+        return make_response(jsonify({'error': 'Internal server error'}), 500)
+
+
+
+@app.route('/api/delete-team/<int:team_id>', methods=['DELETE'])
+def delete_team_route(team_id: int) -> Response:
+    """
+    Route to delete a team by its ID. This performs a soft delete by marking it as deleted.
+
+    Path Parameter:
+        - team_id (int): The ID of the team to delete.
+
+    Returns:
+        JSON response indicating success of the operation or error message.
+    """
+    try:
+        app.logger.info(f"Deleting team by ID: {team_id}")
+
+        # Call the delete_team function to perform the soft delete
+        delete_team(team_id)
+        return make_response(jsonify({'status': 'success'}), 200)
+    
+    except ValueError as e:
+        app.logger.error(f"Error deleting team: {e}")
+        return make_response(jsonify({'error': str(e)}), 400)
+    
+    except Exception as e:
+        app.logger.error(f"Error deleting team: {e}")
+        return make_response(jsonify({'error': 'Internal server error'}), 500)
+    
+
+@app.route('/api/get-team-by-id/<int:team_id>', methods=['GET'])
+def get_team_by_id_route(team_id: int) -> Response:
+    """
+    Route to get a team by its ID.
+
+    Path Parameter:
+        - team_id (int): The ID of the team.
+
+    Returns:
+        JSON response with the team details or error message.
+    """
+    try:
+        app.logger.info(f"Retrieving team by ID: {team_id}")
+
+        team = get_team_by_id(team_id)  # Fetch team by ID
+        return make_response(jsonify({'status': 'success', 'team': team.to_dict()}), 200)
+    
+    except ValueError as e:
+        app.logger.error(f"Error retrieving team by ID: {e}")
+        return make_response(jsonify({'error': str(e)}), 400)
+    
+    except Exception as e:
+        app.logger.error(f"Error retrieving team by ID: {e}")
+        return make_response(jsonify({'error': 'Internal server error'}), 500)
+
+
+
+@app.route('/api/get-team-by-name/<string:team_name>', methods=['GET'])
+def get_team_by_name_route(team_name: str) -> Response:
+    """
+    Route to get a team by its name.
+
+    Path Parameter:
+        - team_name (str): The name of the team.
+
+    Returns:
+        JSON response with the team details or error message.
+    """
+    try:
+        app.logger.info(f"Retrieving team by name: {team_name}")
+
+        if not team_name:
+            return make_response(jsonify({'error': 'Team name is required'}), 400)
+
+        team = get_team_by_name(team_name)  # Fetch team by name
+        return make_response(jsonify({'status': 'success', 'team': team.to_dict()}), 200)
+    
+    except ValueError as e:
+        app.logger.error(f"Error retrieving team by name: {e}")
+        return make_response(jsonify({'error': str(e)}), 400)
+    
+    except Exception as e:
+        app.logger.error(f"Error retrieving team by name: {e}")
+        return make_response(jsonify({'error': 'Internal server error'}), 500)
 
 
 
 
+@app.route('/api/update-team-stats/<int:team_id>', methods=['POST'])
+def update_team_stats_route(team_id: int) -> Response:
+    """
+    Route to update the statistics of a team based on game results.
 
+    Path Parameter:
+        - team_id (int): The ID of the team.
+
+    JSON Body:
+        - result (str): The result of the game, either 'win' or 'loss'.
+
+    Returns:
+        JSON response indicating success or error message.
+    """
+    try:
+        # Get the JSON data from the request
+        data = request.get_json()
+
+        # Extract result and validate
+        result = data.get('result')
+
+        if result not in ['win', 'loss']:
+            return make_response(jsonify({'error': "Invalid result. Must be 'win' or 'loss'."}), 400)
+
+        app.logger.info(f"Updating stats for team ID: {team_id} with result: {result}")
+
+        # Call the update_team_stats function to update the stats
+        update_team_stats(team_id, result)
+        return make_response(jsonify({'status': 'success', 'team_id': team_id, 'result': result}), 200)
+
+    except ValueError as e:
+        app.logger.error(f"Error updating team stats: {e}")
+        return make_response(jsonify({'error': str(e)}), 400)
+
+    except Exception as e:
+        app.logger.error(f"Error updating team stats: {e}")
+        return make_response(jsonify({'error': 'Internal server error'}), 500)
 

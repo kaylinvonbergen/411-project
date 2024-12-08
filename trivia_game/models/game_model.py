@@ -9,8 +9,7 @@ import sqlite3
 from typing import Any
 import requests
 import html
-import aiohttp
-import asyncio
+import random
 
 
 from utils.sql_utils import get_db_connection
@@ -34,7 +33,7 @@ class GameModel:
     https://opentdb.com/api.php?amount=1&difficulty=easy&type=multiple
     which generates 1 trivia question in general knowledge, easy difficulty, multiple choice, default encoding.
     '''
-
+    
     rounds = 0 
 
     def __init__(self):
@@ -71,6 +70,7 @@ class GameModel:
         return result
 
     def game(self) -> str:
+
         """
         Determines the result of a game/[round?] between two opponents
 
@@ -89,12 +89,22 @@ class GameModel:
 
         opponent_1 = self.opponents[0]
         opponent_2 = self.opponents[1]
+        favorite_categories = []
+        if len(opponent_1.favorite_categories) == 0:
+            raise ValueError("Favorite categories list is empty.")
+        category += random.randint(min(opponent_1.favorite_categories), max(opponent_1.favorite_categories))        
+
+        if len(opponent_2.favorite_categories) == 0:
+            raise ValueError("Favorite categories list is empty.")
+        category += random.randint(min(opponent_2.favorite_categories), max(opponent_2.favorite_categories))        
+
 
         # Log the start of the game
         logger.info("Game started between %s and %s", opponent_1.name, opponent_2.name)
         logger.info("Getting question 1 of this round from Open Trivia")
 
         for i in range(0,1):
+            category = favorite_categories[i]
             try:
                 logger.info("Getting question %s of this round from Open Trivia", i)
                 api_url = f'https://opentdb.com/api.php?amount=1&category={category}&type=multiple'

@@ -28,11 +28,6 @@ class GameModel:
         opponents (List[Team]): A list of current opponents.
     """
     
-    '''
-    API call
-    https://opentdb.com/api.php?amount=1&difficulty=easy&type=multiple
-    which generates 1 trivia question in general knowledge, easy difficulty, multiple choice, default encoding.
-    '''
     
     rounds = 0 
 
@@ -63,9 +58,7 @@ class GameModel:
 		    boolean: True if correct, False otherwise 
         """
         teamanswer = input("Please enter your answer: ")
-        result = answer = teamanswer
-
-        
+        result = answer == teamanswer
 
         return result
 

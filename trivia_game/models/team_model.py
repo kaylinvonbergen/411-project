@@ -3,6 +3,7 @@ import logging
 import os
 import sqlite3
 from typing import Any
+import requests
 
 from utils.sql_utils import get_db_connection
 from utils.logger import configure_logger
@@ -25,6 +26,7 @@ class Team:
     games_played (int): number of games the team has played 
     total_score (int): cummulative team score
     current_score (int): team's score in current game 
+    mascot (str): url to team mascot 
   
     """
 
@@ -34,6 +36,28 @@ class Team:
     games_played: int
     total_score: int
     current_score: int
+    mascot: str
+
+def get_random_dog_image() -> str:
+    """
+    Fetch a random dog image URL from the Dog CEO API.
+    
+    Raises: 
+        RequestException: if there is an error fetching the dog image"""
+    
+
+    try:
+        # Fetch that dog! ( fetch random dog image from api )
+        response = requests.get("https://dog.ceo/api/breeds/image/random")
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        data = response.json()
+        return data['message']  # Return the URL of the dog image
+    
+
+    except requests.exceptions.RequestException as e:
+        logger.error("Error fetching dog image: %s", e)
+        return "https://images.dog.ceo/breeds/shiba/shiba-16.jpg"  # Fallback in case of error
+
 
 def create_team(name: str, favorite_categories: list[int]) -> None:
     """
@@ -48,12 +72,15 @@ def create_team(name: str, favorite_categories: list[int]) -> None:
         sqlite3.Error: If any database error occurs.
     """
     try:
+        # Get a random dog image URL for the mascot
+        mascot_image_url = get_random_dog_image()
+
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO teams (name, favorite_categories)
-                VALUES (?, ?)
-            """, (name, favorite_categories))
+                INSERT INTO teams (name, favorite_categories, mascot)
+                VALUES (?, ?, ?)
+            """, (name, favorite_categories, mascot_image_url))
             conn.commit()
 
             logger.info("Team successfully added to the database: %s", name)
@@ -102,7 +129,7 @@ def delete_team(team_id: int) -> None:
 
 
 
-def update_meal_stats(team_id: int, result: str) -> None:
+def update_team_stats(team_id: int, result: str) -> None:
     """
     Updates the statistics of a given team based on game results 
 

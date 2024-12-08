@@ -8,7 +8,7 @@ class Team:
         """
         self.id = Team.counter
         Team.counter += 1  # Increment counter for unique team IDs
-        self.name = name
+        self.name = ""
         self.favorite_categories = []  # Start with no favorite categories
         self.games_played = []  # List of game IDs
         self.total_score = 0  # Initialize total score to 0

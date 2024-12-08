@@ -1,7 +1,7 @@
 import pytest
 
-from app import create_app
-from config import TestConfig
+from trivia_game.app import create_app
+from trivia_game.config import TestConfig
 from trivia_game.db import db
 
 @pytest.fixture

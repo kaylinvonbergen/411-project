@@ -1,6 +1,6 @@
 import pytest
 
-from models.password_model import Users
+from trivia_game.trivia_game.models.password_model import Users
 
 
 @pytest.fixture

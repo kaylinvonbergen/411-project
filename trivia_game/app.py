@@ -448,7 +448,7 @@ def get_opponents():
 
 @app.route('/api/clear-opponents', methods=['POST'])
 def clear_opponents():
-        """
+    """
         Route to clear the opponents in the current game.
 
     Returns:

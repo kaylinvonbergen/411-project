@@ -60,7 +60,7 @@ def get_random_dog_image() -> str:
 
 def fetch_trivia_categories() -> list[dict[str, Any]]:
         """
-        Fetch a list of trivia categories from the OpenTDB API.
+        Fetch an exhaustive list of trivia categories from the OpenTDB API.
 
         Returns:
             list[dict[str, Any]]: A list of categories, each with an 'id' and 'name'.
@@ -69,11 +69,14 @@ def fetch_trivia_categories() -> list[dict[str, Any]]:
             RuntimeError: If there is an error fetching categories from the API.
         """
         try:
+            logger.info("Fetching trivia categories from the OpenTDB API.")
             response = requests.get("https://opentdb.com/api_category.php")
             response.raise_for_status()
             data = response.json()
+            logger.info("Successfully fetched trivia categories.")
             return data.get("trivia_categories", [])
         except requests.exceptions.RequestException as e:
+            logger.error("Failed to fetch trivia categories: %s", str(e))
             raise RuntimeError(f"Failed to fetch trivia categories: {e}")
 
 def create_team(team: str, favorite_categories: list[int]) -> None:

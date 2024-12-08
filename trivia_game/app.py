@@ -463,3 +463,9 @@ def clear_opponents():
     
     except Exception as e:
         return make_response(jsonify({'error': 'Internal server error'}), 500)
+    
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+

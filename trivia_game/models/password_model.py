@@ -5,7 +5,7 @@ import os
 from sqlalchemy.exc import IntegrityError
 
 from trivia_game.db import db
-from utils.logger import configure_logger
+from trivia_game.utils.logger import configure_logger
 
 
 logger = logging.getLogger(__name__)

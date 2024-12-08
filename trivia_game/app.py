@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, make_response, Response, request
 import sqlite3
 from werkzeug.exceptions import BadRequest, Unauthorized
-from config import ProductionConfig
+from .config import ProductionConfig
 
 
 

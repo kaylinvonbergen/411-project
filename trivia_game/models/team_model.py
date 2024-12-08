@@ -5,8 +5,8 @@ import sqlite3
 from typing import Any
 import requests
 
-from utils.sql_utils import get_db_connection
-from utils.logger import configure_logger
+from trivia_game.utils.sql_utils import get_db_connection
+from trivia_game.utils.logger import configure_logger
 
 
 logger = logging.getLogger(__name__)

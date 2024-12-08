@@ -1,5 +1,5 @@
-from models.team_model import * 
-from utils.logger import *
+from trivia_game.models.team_model import * 
+from trivia_game.utils.logger import *
 from typing import List
 
 from dataclasses import dataclass
@@ -12,8 +12,8 @@ import html
 import random
 
 
-from utils.sql_utils import get_db_connection
-from utils.logger import configure_logger
+from trivia_game.utils.sql_utils import get_db_connection
+from trivia_game.utils.logger import configure_logger
 
 
 logger = logging.getLogger(__name__)

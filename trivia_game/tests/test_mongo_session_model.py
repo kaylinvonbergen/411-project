@@ -1,6 +1,6 @@
 import pytest
 
-from models.mongo_session_model import login_user, logout_user
+from trivia_game.trivia_game.models.mongo_session_model import login_user, logout_user
 
 @pytest.fixture
 def sample_user_id():
@@ -9,13 +9,13 @@ def sample_user_id():
 
 @pytest.fixture
 def sample_combatants():
-    return [{"meal_id": 1}, {"meal_id": 2}]  # Sample combatant data
+    return [{"id": 1}, {"id": 2}]  # Sample combatant data
 
 
 def test_login_user_creates_session_if_not_exists(mocker, sample_user_id):
     """Test login_user creates a session with no combatants if it does not exist."""
-    mock_find = mocker.patch("meal_max.clients.mongo_client.sessions_collection.find_one", return_value=None)
-    mock_insert = mocker.patch("meal_max.clients.mongo_client.sessions_collection.insert_one")
+    mock_find = mocker.patch("trivia_game.trivia_game.clients.mongo_client.sessions_collection.find_one", return_value=None)
+    mock_insert = mocker.patch("trivia_game.trivia_game.clients.mongo_client.sessions_collection.insert_one")
     mock_battle_model = mocker.Mock()
 
     login_user(sample_user_id, mock_battle_model)
@@ -28,7 +28,7 @@ def test_login_user_creates_session_if_not_exists(mocker, sample_user_id):
 def test_login_user_loads_combatants_if_session_exists(mocker, sample_user_id, sample_combatants):
     """Test login_user loads combatants if session exists."""
     mock_find = mocker.patch(
-        "meal_max.clients.mongo_client.sessions_collection.find_one",
+        "trivia_game.trivia_game.clients.mongo_client.sessions_collection.find_one",
         return_value={"user_id": sample_user_id, "combatants": sample_combatants}
     )
     mock_battle_model = mocker.Mock()
@@ -41,7 +41,7 @@ def test_login_user_loads_combatants_if_session_exists(mocker, sample_user_id, s
 
 def test_logout_user_updates_combatants(mocker, sample_user_id, sample_combatants):
     """Test logout_user updates the combatants list in the session."""
-    mock_update = mocker.patch("meal_max.clients.mongo_client.sessions_collection.update_one", return_value=mocker.Mock(matched_count=1))
+    mock_update = mocker.patch("trivia_game.trivia_game.clients.mongo_client.sessions_collection.update_one", return_value=mocker.Mock(matched_count=1))
     mock_battle_model = mocker.Mock()
     mock_battle_model.get_combatants.return_value = sample_combatants
 
@@ -56,7 +56,7 @@ def test_logout_user_updates_combatants(mocker, sample_user_id, sample_combatant
 
 def test_logout_user_raises_value_error_if_no_user(mocker, sample_user_id, sample_combatants):
     """Test logout_user raises ValueError if no session document exists."""
-    mock_update = mocker.patch("meal_max.clients.mongo_client.sessions_collection.update_one", return_value=mocker.Mock(matched_count=0))
+    mock_update = mocker.patch("trivia_game.trivia_game.clients.mongo_client.sessions_collection.update_one", return_value=mocker.Mock(matched_count=0))
     mock_battle_model = mocker.Mock()
     mock_battle_model.get_combatants.return_value = sample_combatants
 

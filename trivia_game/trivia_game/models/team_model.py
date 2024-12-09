@@ -31,7 +31,7 @@ class Team:
     """
 
     id: int
-    team: str
+    name: str
     favorite_categories: list[int]
     games_played: int
     total_score: int

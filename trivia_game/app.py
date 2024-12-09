@@ -23,6 +23,7 @@ def create_app(config_class=ProductionConfig):
 
 
 app = create_app()
+game_model = GameModel()
 
 
 
@@ -374,89 +375,63 @@ def update_team_stats_route(team_id: int) -> Response:
         #
         ##########################################################
 
-        from trivia_game.models.game_model import GameModel
 
-
-game_model = GameModel()
 
 @app.route('/api/add-opponent', methods=['POST'])
 def add_opponent():
-        """
-        Route to add an opponent to the game.
+    """Route to add an opponent to the game."""
+    try:
+        data = request.get_json()
+        team_id = data.get('team_id')
 
-        Expected JSON Input:
-            - team_id (int): The ID of the team to add as an opponent.
+        if not team_id:
+            return make_response(jsonify({'error': 'Team ID is required'}), 400)
 
-        Returns:
-            JSON response indicating success or error message.
-        """
-        try:
-            data = request.get_json()
-            team_id = data.get('team_id')
+        team = Team.get_team_by_id(team_id)
+        game_model.prep_opponent(team)
 
-            if not team_id:
-                return make_response(jsonify({'error': 'Team ID is required'}), 400)
+        return make_response(jsonify({'status': 'success', 'team': team.name}), 200)
+    except ValueError as e:
+        return make_response(jsonify({'error': str(e)}), 400)
+    except Exception as e:
+        app.logger.error(f"Error adding opponent: {e}")
+        return make_response(jsonify({'error': 'Failed to add opponent'}), 500)
 
-            # Fetch the team object using its ID
-            team = get_team_by_id(team_id)  # Assuming get_team_by_id is defined elsewhere
 
-            # Add the team as an opponent
-            game_model.prep_opponent(team)
-            return make_response(jsonify({'status': 'success', 'team': team.name}), 200)
-        
-        except ValueError as e:
-            return make_response(jsonify({'error': str(e)}), 400)
-        except Exception as e:
-            return make_response(jsonify({'error': 'Internal server error'}), 500)
+
 
 
 @app.route('/api/start-game', methods=['POST'])
 def start_game():
-        """
-        Route to start a game between two opponents.
-
-        Returns:
-            JSON response with the game's result or an error message.
-        """
-        try:
-            result = game_model.game()  # Run the game logic
-
-            return make_response(jsonify({'status': 'success', 'result': 'Game completed successfully'}), 200)
-        
-        except ValueError as e:
-            return make_response(jsonify({'error': str(e)}), 400)
-        except Exception as e:
-            return make_response(jsonify({'error': 'Internal server error'}), 500)
+    """Route to start a game."""
+    try:
+        result = game_model.game()
+        return make_response(jsonify({'status': 'success', 'result': 'Game completed successfully'}), 200)
+    except ValueError as e:
+        return make_response(jsonify({'error': str(e)}), 400)
+    except Exception as e:
+        app.logger.error(f"Error starting game: {e}")
+        return make_response(jsonify({'error': 'Failed to start game'}), 500)
 
 
 @app.route('/api/get-opponents', methods=['GET'])
 def get_opponents():
-        """
-        Route to get the list of opponents in the current game.
-
-        Returns:
-            JSON response with the list of opponents or an error message.
-        """
-        try:
-            opponents = game_model.get_opponents()
-            opponents_list = [opponent.to_dict() for opponent in opponents]  # Assuming Team objects have a `to_dict` method
-            return make_response(jsonify({'status': 'success', 'opponents': opponents_list}), 200)
-        
-        except Exception as e:
-            return make_response(jsonify({'error': 'Internal server error'}), 500)
+    """Route to retrieve the list of opponents."""
+    try:
+        opponents = game_model.get_opponents()
+        opponents_list = [opponent.to_dict() for opponent in opponents]
+        return make_response(jsonify({'status': 'success', 'opponents': opponents_list}), 200)
+    except Exception as e:
+        app.logger.error(f"Error retrieving opponents: {e}")
+        return make_response(jsonify({'error': 'Failed to retrieve opponents'}), 500)
 
 
 @app.route('/api/clear-opponents', methods=['POST'])
 def clear_opponents():
-    """
-        Route to clear the opponents in the current game.
-
-    Returns:
-        JSON response indicating success or an error message.
-    """
+    """Route to clear the list of opponents."""
     try:
         game_model.clear_opponents()
         return make_response(jsonify({'status': 'success', 'message': 'Opponents cleared'}), 200)
-    
     except Exception as e:
-        return make_response(jsonify({'error': 'Internal server error'}), 500)
+        app.logger.error(f"Error clearing opponents: {e}")
+        return make_response(jsonify({'error': 'Failed to clear opponents'}), 500)

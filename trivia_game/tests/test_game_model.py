@@ -9,7 +9,7 @@ def mock_team():
     """Fixture to create a mock Team instance."""
     return Team(
         id=1,
-        name="Team A",
+        team="Team A",
         favorite_categories=[9, 10],
         games_played=0,
         total_score=0,
@@ -111,7 +111,7 @@ def test_game_success(mock_requests_get, game_model, mock_team):
     game_model.prep_opponent(mock_team)
     opponent_2 = Team(
         id=2,
-        name="Team B",
+        team="Team B",
         favorite_categories=[11, 12],
         games_played=0,
         total_score=0,

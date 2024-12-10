@@ -24,13 +24,12 @@ class GameModel:
 
     Attributes:
         opponents (List[Team]): A list of current opponents.
+        rounds (int): number of rounds played in the game
+        session_token (str): the session token for opentdb
     """
-    
-  
-
     def __init__(self):
         """
-        Initializes the GameModel object with an empty list of combatants
+        Initializes the GameModel object with an empty list of combatants, rounds = 0, and creates a session token
         """
 
         self.rounds=0
@@ -41,19 +40,17 @@ class GameModel:
         response = requests.get(url)
         data = response.json()
         
-        if data['response_code'] == 0:  # Token generated successfully
+        if data['response_code'] == 0: 
+            logger.info("session token created!")
             self.session_token = data['token']
         else:
             logger.error("Failed to get session token :(")
-            self.session_token: str = ""
+            self.session_token = ""
 
 
     def display_score(self):
         """
-        Displays current scores and logs trivia stats.
-
-        Raises:
-                ValueError: if there are no trivia categories
+        Displays current scores and category information
         """
         # Log current scores
         logger.info("Current score is:")
@@ -62,7 +59,7 @@ class GameModel:
 
         # Fetch trivia stats from /api/trivia/stats
         try:
-            logger.info("Fetching stats . . .")
+            logger.info("Fetching categories . . .")
             response = requests.get("https://opentdb.com/api_category.php")
             response.raise_for_status()  # Check for HTTP errors
             categories = response.json().get('trivia_categories', [])
@@ -73,7 +70,6 @@ class GameModel:
                 logger.info("Available Trivia Categories: %s", stats_string)
             else:
                 logger.warning("No trivia categories available to log.")
-
 
         except requests.exceptions.RequestException as e:
             logger.error("Failed to fetch trivia stats: %s", str(e))
@@ -98,7 +94,6 @@ class GameModel:
         return result
 
     def game(self) -> str:
-
         """
         Plays two rounds of trivia between two opponents
 
@@ -107,6 +102,10 @@ class GameModel:
 
         Raises:
             ValueError: if there are less than two opponents.
+            ValueError: if category list is empty.
+            ValueError: if there are less than two opponents.
+            ValueError: if no trivia questions were found.
+            ValueError: error fetching trivia data.
         """
 
         
@@ -119,38 +118,40 @@ class GameModel:
         opponent_2 = self.opponents[1]
 
         
-        cats_to_pick = []
+        cats_to_pick = [] # will be filled with one random category from each team's favorites list
         if len(opponent_1.favorite_categories) == 0:
-            raise ValueError("Favorite categories list is empty.")
+            raise ValueError("%s's favorite categories list is empty.", opponent_1.team)
         cats_to_pick.append(random.choice(opponent_1.favorite_categories))    
 
         if len(opponent_2.favorite_categories) == 0:
-            raise ValueError("Favorite categories list is empty.")
+            raise ValueError("%s's favorite categories list is empty.", opponent_2.team)
         cats_to_pick.append(random.choice(opponent_2.favorite_categories))    
 
 
         # Log the start of the game
-        logger.info("Game started between %s and %s", opponent_1.team, opponent_2.team)
+        logger.info("Game started between opponent 1: %s and opponent 2: %s", opponent_1.team, opponent_2.team)
 
-        for i in range(0,1):
+        for i in range(0,1): #two rounds
             category = cats_to_pick[i]
             logger.info("The category is: %s", category)
             try:
                 logger.info("Getting question %s of this round from Open Trivia", i)
                 
-                q_type="boolean"
+                q_type="boolean" #first round is a true or false
                 if i == 1: 
-                    q_type = "multiple"
+                    q_type = "multiple" #second round will be multiple choice
                 
                 if self.session_token == "":
+                    logger.info("%s question is being pulled without a session token", category)
                     api_url =  f'https://opentdb.com/api.php?amount=1&category={category}&type={q_type}'
                 else:    
+                    logger.info("%s question is being pulled with a session token", category)
                     api_url = f'https://opentdb.com/api.php?amount=1&category={category}&type={q_type}&token={self.session_token}'
                 
                 
                 # Fetch the data from the API
                 response = requests.get(api_url)
-                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
+                response.raise_for_status() 
 
                 # Parse the JSON response
                 data = response.json()
@@ -178,8 +179,10 @@ class GameModel:
             
             logger.info(f"TEAM 1: Question: {question}")
             score_1 = self.get_result(opponent_1, answer)
+            logger.info("answer stored.")
             logger.info(f"TEAM 2: Question: {question}")
             score_2 = self.get_result(opponent_2, answer)
+            logger.info("answer stored.")
             
 
             # Log scores
@@ -208,7 +211,7 @@ class GameModel:
                     result_s = "incorrect" 
                     logger.info("There was a tie between %s & %s. Both teams were %s.", opponent_1, opponent_2, result_s )
             logger.info("updating data . . .")
-            self.rounds +=1
+            self.rounds += 1
             opponent_1.games_played += 1
             opponent_2.games_played += 1
             self.display_score()

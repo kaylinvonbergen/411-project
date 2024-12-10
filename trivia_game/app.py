@@ -289,7 +289,7 @@ def create_app(config_class=ProductionConfig):
 
                 # Call the create_team function to add the team to the database
                 app.logger.info('Adding team: %s, %s', team, favorite_categories)
-                create_team(team, favorite_categories)
+                Team.create_team(team, favorite_categories)
 
                 app.logger.info("Team added: %s", team)
                 return make_response(jsonify({'status': 'success', 'team': team}), 201)

@@ -118,22 +118,20 @@ class GameModel:
         opponent_2 = self.opponents[1]
 
         
-        cats_to_pick = [] # will be filled with one random category from each team's favorites list
-        if len(opponent_1.favorite_categories) == 0:
-            raise ValueError("%s's favorite categories list is empty.", opponent_1.team)
-        cats_to_pick.append(random.choice(opponent_1.favorite_categories))    
+        # Ensure each opponent has a favorite category
+        if not opponent_1.favorite_category:
+            raise ValueError(f"{opponent_1.team}'s favorite category is not set.")
+        if not opponent_2.favorite_category:
+            raise ValueError(f"{opponent_2.team}'s favorite category is not set.")   
 
-        if len(opponent_2.favorite_categories) == 0:
-            raise ValueError("%s's favorite categories list is empty.", opponent_2.team)
-        cats_to_pick.append(random.choice(opponent_2.favorite_categories))    
+        categories = [opponent_1.favorite_category, opponent_2.favorite_category]
 
 
         # Log the start of the game
         logger.info("Game started between opponent 1: %s and opponent 2: %s", opponent_1.team, opponent_2.team)
 
-        for i in range(0,1): #two rounds
-            category = cats_to_pick[i]
-            logger.info("The category is: %s", category)
+        for i, category in enumerate(categories): #two rounds
+            logger.info("The category for round %d is: %s", i + 1, category)
             try:
                 logger.info("Getting question %s of this round from Open Trivia", i)
                 

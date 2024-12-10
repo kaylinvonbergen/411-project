@@ -10,7 +10,7 @@ def mock_team():
     return Team(
         id=1,
         team="Team A",
-        favorite_categories=[9, 10],
+        favorite_category=9,  
         games_played=0,
         total_score=0,
         current_score=0,
@@ -79,7 +79,6 @@ def test_display_score(game_model, mock_team, mock_requests_get):
     mock_requests_get.return_value.json.return_value = {
         "trivia_categories": [
             {"id": 9, "name": "General Knowledge"},
-            {"id": 10, "name": "Entertainment: Books"}
         ]
     }
 
@@ -112,7 +111,7 @@ def test_game_success(mock_requests_get, game_model, mock_team):
     opponent_2 = Team(
         id=2,
         team="Team B",
-        favorite_categories=[11, 12],
+        favorite_category=11,
         games_played=0,
         total_score=0,
         current_score=0,

@@ -39,13 +39,13 @@ INSERT INTO categories (id, name) VALUES
 CREATE TABLE teams (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     team TEXT NOT NULL UNIQUE,
-    favorite_game_category INTEGER,
+    favorite_category INTEGER,
     mascot TEXT,
     deleted BOOLEAN DEFAULT FALSE,
     current_score INTEGER DEFAULT 0,
     games_played INTEGER DEFAULT 0,
     total_score INTEGER DEFAULT 0,
-    FOREIGN KEY (favorite_game_category) REFERENCES categories(id)
+    FOREIGN KEY (favorite_category) REFERENCES categories(id)
 );
 
 

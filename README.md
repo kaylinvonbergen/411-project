@@ -44,14 +44,14 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
                "status": "healthy"
             }
             ```
-- **Example Request:**
-    ```bash
-    GET /api/health HTTP/1.1
-    Host: localhost:5000
-    ```
-- **Example Response:**
-    ```json
-    {
-       "status": "healthy"
-    }
-    ```
+    - Example Request:
+      ```bash
+      GET /api/health HTTP/1.1
+      Host: localhost:5000
+      ```
+    - Example Response:
+      ```json
+      {
+         "status": "healthy"
+      }
+      ```

@@ -101,4 +101,100 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
        "username": "example_user"
     }
     ```
+#### Route: /api/delete-user
+- **Request Type:** `DELETE`
+- **Purpose:** Delete an existing user account by providing the username.
+- **Request Body:**
+    - `username` (String): The username of the user to be deleted.
+- **Response Format:**
+    - Success Response Example:
+        - Code: 200
+        - Content:
+            ```json
+            {
+               "status": "user deleted",
+               "username": "example_user"
+            }
+            ```
+    - Failure Response Example:
+        - Code: 400
+        - Content:
+            ```json
+            {
+               "error": "Invalid input, username is required"
+            }
+            ```
+        - Code: 500
+        - Content:
+            ```json
+            {
+               "error": "Internal server error"
+            }
+            ```
+- **Example Request:**
+    ```bash
+    curl -X DELETE http://localhost:5000/api/delete-user -H "Content-Type: application/json" -d '{
+        "username": "example_user"
+    }'
+    ```
+- **Example Response:**
+    ```json
+    {
+       "status": "user deleted",
+       "username": "example_user"
+    }
+    ```
+
+---
+
+#### Route: /api/login
+- **Request Type:** `POST`
+- **Purpose:** Log in a user by validating their username and password.
+- **Request Body:**
+    - `username` (String): The username of the user.
+    - `password` (String): The password of the user.
+- **Response Format:**
+    - Success Response Example:
+        - Code: 200
+        - Content:
+            ```json
+            {
+               "message": "User example_user logged in successfully."
+            }
+            ```
+    - Failure Response Example:
+        - Code: 400
+        - Content:
+            ```json
+            {
+               "error": "Invalid request payload. 'username' and 'password' are required."
+            }
+            ```
+        - Code: 401
+        - Content:
+            ```json
+            {
+               "error": "Invalid username or password."
+            }
+            ```
+        - Code: 500
+        - Content:
+            ```json
+            {
+               "error": "An unexpected error occurred."
+            }
+            ```
+- **Example Request:**
+    ```bash
+    curl -X POST http://localhost:5000/api/login -H "Content-Type: application/json" -d '{
+        "username": "example_user",
+        "password": "securepassword"
+    }'
+    ```
+- **Example Response:**
+    ```json
+    {
+       "message": "User example_user logged in successfully."
+    }
+    ```
 

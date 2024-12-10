@@ -31,26 +31,27 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
 
 ## API Routes:
 
-### Route: `/team/create`
-- **Request Type:** `POST`
-- **Purpose:** Create a new team with details such as name, mascot, and favorite trivia categories.
-- **Request Body:**
-  - `name` (String): Name of the team.
-  - `mascot` (String): URL to the team's mascot image.
-  - `favorite_categories` (Array[Int]): List of trivia category IDs.
+#### Route: /api/health
+- **Request Type:** `GET`
+- **Purpose:** Verify the service is running and healthy.
+- **Request Parameters:** None
 - **Response Format:**
-  - Success:
-    - Code: 200
-    - Content:
-      ```json
-      {
-        "message": "Team created successfully"
-      }
-      ```
+    - Success Response Example:
+        - Code: 200
+        - Content:
+            ```json
+            {
+               "status": "healthy"
+            }
+            ```
 - **Example Request:**
-  ```bash
-  curl -X POST http://localhost:5000/team/create -H "Content-Type: application/json" -d '{
-    "name": "Team A",
-    "mascot": "https://example.com/mascot.png",
-    "favorite_categories": [9, 10]
-  }'
+    ```bash
+    GET /api/health HTTP/1.1
+    Host: localhost:5000
+    ```
+- **Example Response:**
+    ```json
+    {
+       "status": "healthy"
+    }
+    ```

@@ -22,7 +22,21 @@ def create_app(config_class=ProductionConfig):
 
 
 
+
+
+
 app = create_app()
+
+@app.route('/api/health', methods=['GET'])
+def healthcheck() -> Response:
+    """
+    Health check route to verify the service is running.
+
+    Returns:
+        JSON response indicating the health status of the service.
+    """
+    app.logger.info('Health check')
+    return make_response(jsonify({'status': 'healthy'}), 200)
 
 
 

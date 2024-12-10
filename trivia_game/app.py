@@ -52,9 +52,9 @@ def create_app(config_class=ProductionConfig):
             app.logger.info("Checking database connection...")
             check_database_connection()
             app.logger.info("Database connection is OK.")
-            app.logger.info("Checking if meals table exists...")
-            check_table_exists("meals")
-            app.logger.info("meals table exists.")
+            app.logger.info("Checking if teams table exists...")
+            check_table_exists("teams")
+            app.logger.info("teams table exists.")
             return make_response(jsonify({'database_status': 'healthy'}), 200)
         except Exception as e:
             return make_response(jsonify({'error': str(e)}), 404)
@@ -262,45 +262,47 @@ def create_app(config_class=ProductionConfig):
 
     @app.route('/api/create-team', methods=['POST'])
     def add_team() -> Response:
-            """
-            Route to add a new team to the database.
+        """
+        Route to add a new team to the database.
 
-            Expected JSON Input:
-                - team (str): The name of the team.
-                - favorite_categories (list[int]): List of category IDs for the team's favorite categories.
+        Expected JSON Input:
+            - team (str): The name of the team.
+            - favorite_category (int): The ID of the team's favorite category.
 
-            Returns:
-                JSON response indicating the success of the team addition.
-            Raises:
-                400 error if input validation fails.
-                500 error if there is an issue adding the team to the database.
-            """
-            app.logger.info('Creating new team')
-            try:
-                # Get the JSON data from the request
-                data = request.get_json()
+        Returns:
+            JSON response indicating the success of the team addition.
+        Raises:
+            400 error if input validation fails.
+            500 error if there is an issue adding the team to the database.
+        """
+        app.logger.info('Creating new team')
+        try:
+            # Get the JSON data from the request
+            data = request.get_json()
+            app.logger.info("Received data: %s", data)  # Log the data
 
-                # Extract and validate required fields
-                team = data.get('team')
-                favorite_categories = data.get('favorite_categories')
+            # Extract and validate required fields
+            team = data.get('team')
+            favorite_category = data.get('favorite_category')
 
-                if not team or not isinstance(favorite_categories, list) or not all(isinstance(cat, int) for cat in favorite_categories):
-                    return make_response(jsonify({'error': 'Invalid input, all fields are required with valid values'}), 400)
+            if not team or not isinstance(favorite_category, int):
+                return make_response(jsonify({'error': 'Invalid input, all fields are required with valid values'}), 400)
 
-                # Call the create_team function to add the team to the database
-                app.logger.info('Adding team: %s, %s', team, favorite_categories)
-                Team.create_team(team, favorite_categories)
+            # Call the create_team function to add the team to the database
+            app.logger.info('Adding team: %s, %s', team, favorite_category)
+            create_team(team, favorite_category)
 
-                app.logger.info("Team added: %s", team)
-                return make_response(jsonify({'status': 'success', 'team': team}), 201)
-            
-            except ValueError as e:
-                app.logger.error("Failed to add team: %s", str(e))
-                return make_response(jsonify({'error': str(e)}), 400)
-            
-            except Exception as e:
-                app.logger.error("Failed to add team: %s", str(e))
-                return make_response(jsonify({'error': 'Internal server error'}), 500)
+            app.logger.info("Team added: %s", team)
+            return make_response(jsonify({'status': 'success', 'team': team}), 201)
+        
+        except ValueError as e:
+            app.logger.error("Failed to add team: %s", str(e))
+            return make_response(jsonify({'error': str(e)}), 400)
+        
+        except Exception as e:
+            app.logger.error("Failed to add team: %s", str(e))
+            return make_response(jsonify({'error': 'Internal server error'}), 500)
+
 
 
 

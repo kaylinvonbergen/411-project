@@ -38,6 +38,17 @@ check_health() {
   fi
 }
 
+check_db() {
+  echo "Checking database connection..."
+  curl -s -X GET "$BASE_URL/db-check" | grep -q '"database_status": "healthy"'
+  if [ $? -eq 0 ]; then
+    echo "Database connection is healthy."
+  else
+    echo "Database check failed."
+    exit 1
+  fi
+}
+
 
 # Function to initialize the database
 init_db() {
@@ -130,7 +141,7 @@ logout_user() {
 create_team() {
   echo "Adding a team..."
   response=$(curl -s -X POST "$BASE_URL/create-team" -H "Content-Type: application/json" \
-    -d '{"team":"TeamName", "favorite_categories":[1, 2, 3]}')
+    -d '{"team":"TeamName", "favorite_category":1}')
   
   # Print the full response to debug
   echo "Response: $response"
@@ -149,6 +160,7 @@ create_team() {
 
 
 check_health
+check_db
 init_db
 create_user
 login_user

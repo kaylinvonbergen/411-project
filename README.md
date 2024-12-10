@@ -103,49 +103,32 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
     ```
 #### Route: /api/delete-user
 - **Request Type:** `DELETE`
-- **Purpose:** Delete an existing user account by providing the username.
+- **Purpose:** Users can delete their account by providing their username.
 - **Request Body:**
-    - `username` (String): The username of the user to be deleted.
+    - `username` (String): The username of the account to be deleted.
 - **Response Format:**
     - Success Response Example:
         - Code: 200
         - Content:
             ```json
             {
-               "status": "user deleted",
+              "status": "user deleted",
+              "username": "example_user"
+            }
+            ```
+        - Example Request:
+            ```json
+            {
                "username": "example_user"
             }
             ```
-    - Failure Response Example:
-        - Code: 400
-        - Content:
+        - Example Response:
             ```json
             {
-               "error": "Invalid input, username is required"
+                "status": "user deleted",
+                "username": "example_user"
             }
             ```
-        - Code: 500
-        - Content:
-            ```json
-            {
-               "error": "Internal server error"
-            }
-            ```
-- **Example Request:**
-    ```bash
-    curl -X DELETE http://localhost:5000/api/delete-user -H "Content-Type: application/json" -d '{
-        "username": "example_user"
-    }'
-    ```
-- **Example Response:**
-    ```json
-    {
-       "status": "user deleted",
-       "username": "example_user"
-    }
-    ```
-
----
 
 #### Route: /api/login
 - **Request Type:** `POST`

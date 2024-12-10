@@ -22,22 +22,8 @@ def create_app(config_class=ProductionConfig):
 
 
 
-
-
-
 app = create_app()
 game_model = GameModel()
-
-@app.route('/api/health', methods=['GET'])
-def healthcheck() -> Response:
-    """
-    Health check route to verify the service is running.
-
-    Returns:
-        JSON response indicating the health status of the service.
-    """
-    app.logger.info('Health check')
-    return make_response(jsonify({'status': 'healthy'}), 200)
 
 
 
@@ -401,10 +387,10 @@ def add_opponent():
         if not team_id:
             return make_response(jsonify({'error': 'Team ID is required'}), 400)
 
-        team = Team.get_team_by_id(team_id)
-        game_model.prep_opponent(team)
+        team0 = Team.get_team_by_id(team_id)
+        game_model.prep_opponent(team0)
 
-        return make_response(jsonify({'status': 'success', 'team': team.name}), 200)
+        return make_response(jsonify({'status': 'success', 'team': team0.team}), 200)
     except ValueError as e:
         return make_response(jsonify({'error': str(e)}), 400)
     except Exception as e:

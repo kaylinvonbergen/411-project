@@ -57,8 +57,8 @@ class GameModel:
         """
         # Log current scores
         logger.info("Current score is:")
-        logger.info(" %s: %s correct out of %s questions", self.opponents[0].name, self.opponents[0].current_score, self.rounds)
-        logger.info(" %s: %s correct out of %s questions", self.opponents[1].name, self.opponents[1].current_score, self.rounds)
+        logger.info(" %s: %s correct out of %s questions", self.opponents[0].team, self.opponents[0].current_score, self.rounds)
+        logger.info(" %s: %s correct out of %s questions", self.opponents[1].team, self.opponents[1].current_score, self.rounds)
 
         # Fetch trivia stats from /api/trivia/stats
         try:
@@ -130,7 +130,7 @@ class GameModel:
 
 
         # Log the start of the game
-        logger.info("Game started between %s and %s", opponent_1.name, opponent_2.name)
+        logger.info("Game started between %s and %s", opponent_1.team, opponent_2.team)
 
         for i in range(0,1):
             category = cats_to_pick[i]
@@ -183,8 +183,8 @@ class GameModel:
             
 
             # Log scores
-            logger.info("Result for %s: %.3f", opponent_1.name, score_1)
-            logger.info("Result for %s: %.3f", opponent_2.name, score_2)
+            logger.info("Result for %s: %.3f", opponent_1.team, score_1)
+            logger.info("Result for %s: %.3f", opponent_2.team, score_2)
 
             logger.info("determining victory . . .")
 
@@ -192,12 +192,12 @@ class GameModel:
             if score_1 and not score_2:
                 winner = opponent_1
                 loser = opponent_2
-                logger.info("The winner is: %s", winner.name)
+                logger.info("The winner is: %s", winner.team)
                 winner.team_score += 1
             elif not score_1 and score_2:
                 winner = opponent_2
                 loser = opponent_1
-                logger.info("The winner is: %s", winner.name)
+                logger.info("The winner is: %s", winner.team)
                 winner.team_score += 1
             else:
                 if score_1:
@@ -244,15 +244,15 @@ class GameModel:
         """
 
         if len(self.opponents) >= 2:
-            logger.error("Attempted to add opponent '%s' but opponents list is full", opponent.name)
+            logger.error("Attempted to add opponent '%s' but opponents list is full", opponent.team)
             raise ValueError("Opponents list is full, cannot add more opponents.")
 
         # Log the addition of the opponent
-        logger.info("Adding opponent '%s' to opponents list", opponent.name)
+        logger.info("Adding opponent '%s' to opponents list", opponent.team)
 
         self.opponents.append(opponent)
 
         # Log the current state of opponents
-        logger.info("Current opponents list: %s", [opponent.name for opponent in self.opponents])
+        logger.info("Current opponents list: %s", [opponent.team for opponent in self.opponents])
     
 

@@ -62,6 +62,8 @@ class Users(db.Model):
             logger.error("Database error: %s", str(e))
             raise
 
+            raise
+
     @classmethod
     def check_password(cls, username: str, password: str) -> bool:
         """

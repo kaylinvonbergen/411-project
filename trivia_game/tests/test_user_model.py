@@ -10,6 +10,11 @@ def sample_user():
         "password": "securepassword123"
     }
 
+def clear_users(session):
+    """Clear all users from the database."""
+    session.query(Users).delete()
+    session.commit()
+
 
 ##########################################################
 # User Creation
@@ -17,6 +22,10 @@ def sample_user():
 
 def test_create_user(session, sample_user):
     """Test creating a new user with a unique username."""
+
+    # Clear users before starting the test
+    clear_users(session)
+    
     Users.create_user(**sample_user)
     user = session.query(Users).filter_by(username=sample_user["username"]).first()
     assert user is not None, "User should be created in the database."

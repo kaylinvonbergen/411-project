@@ -55,3 +55,50 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
          "status": "healthy"
       }
       ```
+      
+#### Route: /api/create-user
+- **Request Type:** `POST`
+- **Purpose:** Create a new user account with a username and password.
+- **Request Body:**
+    - `username` (String): The desired username for the user.
+    - `password` (String): The password for the user.
+- **Response Format:**
+    - Success Response Example:
+        - Code: 201
+        - Content:
+            ```json
+            {
+               "status": "user added",
+               "username": "example_user"
+            }
+            ```
+    - Failure Response Example:
+        - Code: 400
+        - Content:
+            ```json
+            {
+               "error": "Invalid input, both username and password are required"
+            }
+            ```
+        - Code: 500
+        - Content:
+            ```json
+            {
+               "error": "Internal server error"
+            }
+            ```
+- **Example Request:**
+    ```bash
+    curl -X POST http://localhost:5000/api/create-user -H "Content-Type: application/json" -d '{
+        "username": "example_user",
+        "password": "securepassword"
+    }'
+    ```
+- **Example Response:**
+    ```json
+    {
+       "status": "user added",
+       "username": "example_user"
+    }
+    ```
+

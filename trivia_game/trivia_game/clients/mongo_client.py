@@ -3,7 +3,7 @@ import os
 
 from pymongo import MongoClient
 
-from trivia_game.trivia_game.utils.logger import configure_logger
+from trivia_game.utils.logger import configure_logger
 
 
 logger = logging.getLogger(__name__)

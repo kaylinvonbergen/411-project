@@ -1,8 +1,8 @@
 import pytest
 
-from trivia_game.app import create_app
-from trivia_game.config import TestConfig
-from trivia_game.db import db
+from app import create_app
+from config import TestConfig
+from trivia_game.utils.db import db
 
 @pytest.fixture
 def app():

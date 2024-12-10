@@ -3,7 +3,7 @@ import logging
 import os
 import sqlite3
 
-from trivia_game.trivia_game.utils.logger import configure_logger
+from trivia_game.utils.logger import configure_logger
 
 
 logger = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ configure_logger(logger)
 
 
 # load the db path from the environment with a default value
-DB_PATH = os.getenv("DB_PATH", "/app/sql/meal_max.db")
+DB_PATH = os.getenv("DB_PATH", "/app/db/trivia_game.db")
 
 
 def check_database_connection():

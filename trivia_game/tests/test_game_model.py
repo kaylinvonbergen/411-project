@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from trivia_game.trivia_game.models.team_model import Team
-from trivia_game.trivia_game.models.game_model import GameModel
+from trivia_game.models.team_model import Team
+from trivia_game.models.game_model import GameModel
 
 
 @pytest.fixture

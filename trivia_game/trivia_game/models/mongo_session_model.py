@@ -1,8 +1,8 @@
 import logging
 from typing import Any, List
 
-from trivia_game.trivia_game.clients.mongo_client import sessions_collection
-from trivia_game.trivia_game.utils.logger import configure_logger
+from ..clients.mongo_client import sessions_collection
+from ..utils.logger import configure_logger
 
 
 logger = logging.getLogger(__name__)

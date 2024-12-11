@@ -289,3 +289,37 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
        "database_status": "healthy"
     }
     ```
+#### Route: /api/create-team
+- **Request Type:** `POST`
+- **Purpose:** Add a new team to database
+- **Request Body:**
+   - `team` (String): The name of the team.
+   - `favorite category` (integer): ID of the team's favorite integer
+- **Response Format:**
+    - Success Response Example:
+        - Code: 201
+        - Content:
+            ```json
+            {
+               "status": "success"
+               "team": "Team A"
+            }
+            ```           
+- **Example Request:**
+    ```bash
+    
+    curl -X POST http://localhost:5000/api/create-team \
+    -H "Content-Type: application/json" \
+    -d '{
+      "team": "Team A",
+      "favorite_category": 9
+    }'
+    
+    ```
+- **Example Response:**
+    ```json
+    {
+   "status": "success",
+   "team": "Team A"
+    }
+    ```

@@ -236,7 +236,34 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
        "dog_image_url": "https://images.dog.ceo/breeds/shiba/shiba-16.jpg"
     }
     ```
-#### Route: /pi/db/check
+#### Route: /api/init-db
+- **Request Type:** `POST`
+- **Purpose:** Initialize or reset the database tables.
+- **Response Format:**
+    - Success Response Example:
+        - Code: 200
+        - Content:
+            ```json
+            {
+             "status": "success",
+             "message": "Database initialized successfully."
+            }
+            ```           
+- **Example Request:**
+    ```bash
+    
+    curl -X POST http://localhost:5000/api/init-db
+    
+    ```
+- **Example Response:**
+    ```json
+    {
+   "status": "success",
+   "message": "Database initialized successfully."
+    }
+    ```
+
+#### Route: /api/db/check
 - **Request Type:** `GET`
 - **Purpose:** Verify database connectivity and the existence of essential tables
 - **Request Body:**
@@ -250,3 +277,15 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
                "status": "healthy"
             }
             ```           
+- **Example Request:**
+    ```bash
+    
+    curl -X GET http://localhost:5000/api/db-check
+    
+    ```
+- **Example Response:**
+    ```json
+    {
+       "database_status": "healthy"
+    }
+    ```

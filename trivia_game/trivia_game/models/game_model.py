@@ -152,14 +152,27 @@ class GameModel:
                     time.sleep(5)
                 else:    
                     logger.info("%s question is being pulled with a session token", category)
-                    time.sleep(5)
+                    
                     api_url = f'https://opentdb.com/api.php?amount=1&category={category}&type={q_type}&token={self.session_token}'
                     time.sleep(5)
                 
-                
+
+                base_url = "https://opentdb.com/api.php"
+               # Parameters to append to the URL
+                amount = 1  # Number of questions
+                category = random.choice(categories)  
+                difficulty = "easy"  # Difficulty level
+                type_of_question = "multiple"  # Type of question (multiple choice)
+                session_token = self.session_token
+
+                # Construct the full URL with query parameters
+                url = f"{base_url}?amount={amount}&category={category}&difficulty={difficulty}&type={type_of_question}&token={session_token}"
+
+                # Make the GET request
+                response = requests.get(url)
                 # Fetch the data from the API
                 time.sleep(5)
-                response = requests.get(api_url)
+                response = requests.get("https://opentdb.com/api.php?amount=1")
                 time.sleep(5)
                 response.raise_for_status() 
 

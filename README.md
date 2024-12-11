@@ -180,4 +180,33 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
        "message": "User example_user logged in successfully."
     }
     ```
+#### Route: /api/logout
+- **Request Type:** `POST`
+- **Purpose:** Log out a user and save their combatants to MongoDB
+- **Request Body:**
+    - `username` (String): The username of the user to logout.
+- **Response Format:**
+    - Success Response Example:
+        - Code: 200
+        - Content:
+            ```json
+            {
+               "message": "User <username> logged out successfully."
+            }
+            ```
+- **Example Request:**
+    ```bash
+    curl -X POST http://localhost:5000/api/logout \
+    -H "Content-Type: application/json" \
+    -d '{
+      "username": "example_user"
+  }'
 
+    ```
+- **Example Response:**
+    ```json
+    {
+       "message": "User example_user logged out successfully."
+    }
+    ```
+            

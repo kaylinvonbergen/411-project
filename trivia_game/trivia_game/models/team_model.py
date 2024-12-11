@@ -235,14 +235,22 @@ def get_team_by_id(team_id: int):
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT id, team, favorite_categories, mascot, deleted FROM teams WHERE id = ?", (team_id,))
+                cursor.execute("SELECT id, team, favorite_category, mascot, deleted, current_score, games_played, total_score FROM teams WHERE id = ?", (team_id,))
                 row = cursor.fetchone()
 
                 if row:
-                    if row[5]:
-                        logger.info("Team with ID %s has been deleted", team_id)
-                        raise ValueError(f"Team with ID {team_id} has been deleted")
-                    return Team(id=row[0], team=row[1], favorite_categories=row[2], mascot=row[3])
+                    if row[4]:
+                        logger.info("Team with id %s has been deleted", id)
+                        raise ValueError(f"Team with name {id} has been deleted")
+                    return Team(
+                    id=row[0], 
+                    team=row[1], 
+                    favorite_category=row[2], 
+                    mascot=row[3],  
+                    current_score=row[5], 
+                    games_played=row[6], 
+                    total_score=row[7]
+                )
                 else:
                     logger.info("Team with ID %s not found", team_id)
                     raise ValueError(f"Team with ID {team_id} not found")
@@ -252,12 +260,12 @@ def get_team_by_id(team_id: int):
             raise e
 
 @staticmethod
-def get_team_by_name(team_name: str):
+def get_team_by_name(team: str):
         """
         Retrieves a team from the database based on the given team name
 
         Args:
-            team_name (str): The team of the team to be retrieved 
+            team (str): The team of the team to be retrieved 
 
         Returns:
             Team: The team class instance asscoiated with the 'team_id' given
@@ -271,17 +279,25 @@ def get_team_by_name(team_name: str):
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT id, team, cuisine, price, difficulty, deleted FROM teams WHERE team = ?", (team_name,))
+                cursor.execute("SELECT id, team, favorite_category, mascot, deleted, current_score, games_played, total_score FROM teams WHERE team = ?", (team,))
                 row = cursor.fetchone()
 
                 if row:
-                    if row[5]:
-                        logger.info("Team with name %s has been deleted", team_name)
-                        raise ValueError(f"Team with name {team_name} has been deleted")
-                    return Team(id=row[0], team=row[1], favorite_categories=row[2], mascot=row[3])
+                    if row[4]:
+                        logger.info("Team with name %s has been deleted", team)
+                        raise ValueError(f"Team with name {team} has been deleted")
+                    return Team(
+                    id=row[0], 
+                    team=row[1], 
+                    favorite_category=row[2], 
+                    mascot=row[3],  
+                    current_score=row[5], 
+                    games_played=row[6], 
+                    total_score=row[7]
+                )
                 else:
-                    logger.info("Team with name %s not found", team_name)
-                    raise ValueError(f"Team with name {team_name} not found")
+                    logger.info("Team with name %s not found", team)
+                    raise ValueError(f"Team with name {team} not found")
 
         except sqlite3.Error as e:
             logger.error("Database error: %s", str(e))

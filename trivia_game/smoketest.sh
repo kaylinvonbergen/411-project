@@ -176,7 +176,7 @@ delete_team() {
 
 
 clear_teams() {
-  echo "Clearing meals from database..."
+  echo "Clearing teams from database..."
 
   curl -s -X DELETE "$BASE_URL/clear-teams" | grep -q '"status": "success"'
 }
@@ -185,7 +185,7 @@ clear_teams() {
 get_team_by_name() {
   team=$1
 
-  echo "Getting meal by name ($team)..."
+  echo "Getting team by name ($team)..."
   response=$(curl -s -X GET "$BASE_URL/get-team-by-name/$team")
 
   if echo "$response" | grep -q '"status": "success"'; then
@@ -196,6 +196,25 @@ get_team_by_name() {
     fi
   else
     echo "Failed to get team by name ($team)."
+    exit 1
+  fi
+}
+
+get_team_by_id() {
+  id=$1
+
+  echo "Retrieving team by ID ($id)..."
+
+  response=$(curl -s "$BASE_URL/get-team-by-id/$id")
+
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Team retrieved successfully by ID ($id)."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Team JSON (ID $id):"
+      echo "$response" | jq .
+    fi
+  else
+    echo "Failed to get team by ID ($id)."
     exit 1
   fi
 }
@@ -211,5 +230,7 @@ login_user
 create_team "peebo" 1
 delete_team 1
 clear_teams
-
+create_team "gorp" 3
+get_team_by_name "gorp"
+get_team_by_id 1
 

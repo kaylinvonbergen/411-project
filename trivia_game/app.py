@@ -364,8 +364,8 @@ def create_app(config_class=ProductionConfig):
             try:
                 app.logger.info(f"Retrieving team by ID: {team_id}")
 
-                team = Team.get_team_by_id(team_id)  # Fetch team by ID
-                return make_response(jsonify({'status': 'success', 'team': team.to_dict()}), 200)
+                team = get_team_by_id(team_id)  # Fetch team by ID
+                return make_response(jsonify({'status': 'success', 'meal': team}), 200)
             
             except ValueError as e:
                 app.logger.error(f"Error retrieving team by ID: {e}")
@@ -377,8 +377,8 @@ def create_app(config_class=ProductionConfig):
 
 
 
-    @app.route('/api/get-team-by-name/<string:team_name>', methods=['GET'])
-    def get_team_by_name_route(team_name: str) -> Response:
+    @app.route('/api/get-team-by-name/<string:team>', methods=['GET'])
+    def get_team_by_name_route(team: str) -> Response:
             """
             Route to get a team by its name.
 
@@ -389,13 +389,13 @@ def create_app(config_class=ProductionConfig):
                 JSON response with the team details or error message.
             """
             try:
-                app.logger.info(f"Retrieving team by name: {team_name}")
+                app.logger.info(f"Retrieving team by name: {team}")
 
-                if not team_name:
+                if not team:
                     return make_response(jsonify({'error': 'Team name is required'}), 400)
 
-                team = Team.get_team_by_name(team_name)  # Fetch team by name
-                return make_response(jsonify({'status': 'success', 'team': team.to_dict()}), 200)
+                team = get_team_by_name(team)  # Fetch team by name
+                return make_response(jsonify({'status': 'success', 'meal': team}), 200)
             
             except ValueError as e:
                 app.logger.error(f"Error retrieving team by name: {e}")

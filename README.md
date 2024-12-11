@@ -23,12 +23,6 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
 
 ---
 
-## Setup Instructions:
-1. **...**
-2. **...**
-
----
-
 ## API Routes:
 
 #### Route: /api/health

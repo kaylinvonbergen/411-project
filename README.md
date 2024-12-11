@@ -175,7 +175,7 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
     }
     ```
 
-## Features:
+## RUNNING TESTS:
 
 to run UNITS TESTS    build + run tests-dockerfile
 

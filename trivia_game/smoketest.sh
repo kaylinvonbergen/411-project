@@ -133,18 +133,19 @@ logout_user() {
 
 ##############################################
 #
-# Meals
+# Teams
 #
 ##############################################
 
 # Function to add a team (combatant)
 create_team() {
+
+  echo "Clearing the database before testing..."
+
   echo "Adding a team..."
   response=$(curl -s -X POST "$BASE_URL/create-team" -H "Content-Type: application/json" \
     -d '{"team":"TeamName", "favorite_category":1}')
   
-  # Print the full response to debug
-  echo "Response: $response"
   
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Team added successfully."
@@ -157,6 +158,32 @@ create_team() {
 }
 
 
+delete_team() {
+  id=$1
+
+  echo "Deleting team by ID ($id)..."
+
+  response=$(curl -s -X DELETE "$BASE_URL/delete-team/$id")
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Team deleted successfully by ID ($id)."
+  else
+    echo "Failed to delete team by ID ($id)."
+    exit 1
+  fi
+
+}
+
+
+clear_meals() {
+  echo "Clearing meals from database..."
+
+  curl -s -X DELETE "$BASE_URL/clear-meals" | grep -q '"status": "success"'
+}
+
+
+
+
+
 
 
 check_health
@@ -165,5 +192,7 @@ init_db
 create_user
 login_user
 create_team
+delete_team 1
+clear_meals
 
 

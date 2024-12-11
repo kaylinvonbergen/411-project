@@ -158,10 +158,30 @@ def create_team(team: str, favorite_category: int) -> None:
         raise e
 
 
-        
+def clear_meals() -> None:
+    """
+    Recreates the meals table, effectively deleting all meals.
 
-@staticmethod
-def delete_team(team_id: int) -> None:
+    Raises:
+        sqlite3.Error: If any database error occurs.
+    """
+    try:
+        print("SQL_CREATE_TABLE_PATH:", os.getenv("SQL_CREATE_TABLE_PATH"))
+        with open(os.getenv("SQL_CREATE_TABLE_PATH", "sql/create_team_table.sql"), "r") as fh:
+            create_table_script = fh.read()
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.executescript(create_table_script)
+            conn.commit()
+
+            logger.info("Teams cleared successfully.")
+
+    except sqlite3.Error as e:
+        logger.error("Database error while clearing teams: %s", str(e))
+        raise e    
+
+
+def delete_team(id: int) -> None:
         """
         Marks a team as deleted in the database, sets 'deleted' flag to True
 
@@ -174,21 +194,22 @@ def delete_team(team_id: int) -> None:
         """
         try:
             with get_db_connection() as conn:
+                logger.info("Database connection established successfully.")
                 cursor = conn.cursor()
-                cursor.execute("SELECT deleted FROM teams WHERE id = ?", (team_id,))
+                cursor.execute("SELECT deleted FROM teams WHERE id = ?", (id,))
                 try:
                     deleted = cursor.fetchone()[0]
                     if deleted:
-                        logger.info("Team with ID %s has already been deleted", team_id)
-                        raise ValueError(f"Team with ID {team_id} has been deleted")
+                        logger.info("Team with ID %s has already been deleted", id)
+                        raise ValueError(f"Team with ID {id} has been deleted")
                 except TypeError:
-                    logger.info("Team with ID %s not found", team_id)
-                    raise ValueError(f"Team with ID {team_id} not found")
+                    logger.info("Team with ID %s not found", id)
+                    raise ValueError(f"Team with ID {id} not found")
 
-                cursor.execute("UPDATE teams SET deleted = TRUE WHERE id = ?", (team_id,))
+                cursor.execute("UPDATE teams SET deleted = TRUE WHERE id = ?", (id,))
                 conn.commit()
 
-                logger.info("Team with ID %s marked as deleted.", team_id)
+                logger.info("Team with ID %s marked as deleted.", id)
 
         except sqlite3.Error as e:
             logger.error("Database error: %s", str(e))

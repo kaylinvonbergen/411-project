@@ -306,32 +306,49 @@ def create_app(config_class=ProductionConfig):
 
 
 
-    @app.route('/api/delete-team/<int:team_id>', methods=['DELETE'])
-    def delete_team_route(team_id: int) -> Response:
-            """
-            Route to delete a team by its ID. This performs a soft delete by marking it as deleted.
+    @app.route('/api/delete-team/<int:id>', methods=['DELETE'])
+    def delete_team_route(id: int) -> Response:
+        """
+        Route to mark a team as deleted in the database.
 
-            Path Parameter:
-                - team_id (int): The ID of the team to delete.
+        Expected URL Parameter:
+            - id (int): The unique ID of the team to be deleted.
 
-            Returns:
-                JSON response indicating success of the operation or error message.
-            """
-            try:
-                app.logger.info(f"Deleting team by ID: {team_id}")
+        Returns:
+            JSON response indicating the success or failure of the operation.
+        Raises:
+            400 error if the team has already been deleted or doesn't exist.
+            500 error if there is an issue with the database operation.
+        """
+        
+        try:
+            app.logger.info(f"Deleting team by ID: {id}")
+            # Call the delete_team function to mark the team as deleted in the database
+            delete_team(id)
 
-                # Call the delete_team function to perform the soft delete
-                Team.delete_team(team_id)
-                return make_response(jsonify({'status': 'success'}), 200)
-            
-            except ValueError as e:
-                app.logger.error(f"Error deleting team: {e}")
-                return make_response(jsonify({'error': str(e)}), 400)
-            
-            except Exception as e:
-                app.logger.error(f"Error deleting team: {e}")
-                return make_response(jsonify({'error': 'Internal server error'}), 500)
-            
+            app.logger.info(f"Team with ID {id} marked as deleted.")
+            return make_response(jsonify({'status': 'success'}), 200)
+
+        except Exception as e:
+            app.logger.error(f"Failed to delete team with ID {id}: {str(e)}")
+            return make_response(jsonify({'error': 'Internal server error'}), 500)
+
+
+    @app.route('/api/clear-meals', methods=['DELETE'])
+    def clear_catalog() -> Response:
+        """
+        Route to clear all teams (recreates the table).
+
+        Returns:
+            JSON response indicating success of the operation or error message.
+        """
+        try:
+            app.logger.info("Clearing the teams")
+            clear_meals()
+            return make_response(jsonify({'status': 'success'}), 200)
+        except Exception as e:
+            app.logger.error(f"Error clearing catalog: {e}")
+            return make_response(jsonify({'error': str(e)}), 500)    
 
     @app.route('/api/get-team-by-id/<int:team_id>', methods=['GET'])
     def get_team_by_id_route(team_id: int) -> Response:

@@ -175,3 +175,8 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
     }
     ```
 
+## RUNNING TESTS:
+
+to run UNITS TESTS    build + run tests-dockerfile
+
+to run SMOKETESTS     DO NOT RUN IN DOCKER, run outside after running python app.py in another terminal

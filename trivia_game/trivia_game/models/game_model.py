@@ -9,6 +9,7 @@ from typing import Any
 import requests
 import html
 import random
+import time
 
 from trivia_game.utils.sql_utils import get_db_connection
 from trivia_game.utils.logger import configure_logger
@@ -37,7 +38,9 @@ class GameModel:
 
         logger.info("Getting session token")
         url = "https://opentdb.com/api_token.php?command=request"
+        time.sleep(5)
         response = requests.get(url)
+        time.sleep(5)
         data = response.json()
         
         if data['response_code'] == 0: 
@@ -60,7 +63,9 @@ class GameModel:
         # Fetch trivia stats from /api/trivia/stats
         try:
             logger.info("Fetching categories . . .")
+            time.sleep(5)
             response = requests.get("https://opentdb.com/api_category.php")
+            time.sleep(5)
             response.raise_for_status()  # Check for HTTP errors
             categories = response.json().get('trivia_categories', [])
             
@@ -140,15 +145,22 @@ class GameModel:
                     q_type = "multiple" #second round will be multiple choice
                 
                 if self.session_token == "":
+                    
                     logger.info("%s question is being pulled without a session token", category)
+                    time.sleep(5)
                     api_url =  f'https://opentdb.com/api.php?amount=1&category={category}&type={q_type}'
+                    time.sleep(5)
                 else:    
                     logger.info("%s question is being pulled with a session token", category)
+                    time.sleep(5)
                     api_url = f'https://opentdb.com/api.php?amount=1&category={category}&type={q_type}&token={self.session_token}'
+                    time.sleep(5)
                 
                 
                 # Fetch the data from the API
+                time.sleep(5)
                 response = requests.get(api_url)
+                time.sleep(5)
                 response.raise_for_status() 
 
                 # Parse the JSON response
@@ -244,7 +256,7 @@ class GameModel:
             ValueError: If there are already two opponents in the opponent list
         """
 
-        if len(self.opponents) >= 2:
+        if len(self.opponents) > 2:
             logger.error("Attempted to add opponent '%s' but opponents list is full", opponent.team)
             raise ValueError("Opponents list is full, cannot add more opponents.")
 

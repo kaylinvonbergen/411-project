@@ -63,6 +63,7 @@ def test_prep_opponent_limit(game_model, mock_team):
     """Test adding more than two opponents raises a ValueError."""
     game_model.prep_opponent(mock_team)
     game_model.prep_opponent(mock_team)
+    game_model.prep_opponent(mock_team)
     with pytest.raises(ValueError, match="Opponents list is full, cannot add more opponents."):
         game_model.prep_opponent(mock_team)
 

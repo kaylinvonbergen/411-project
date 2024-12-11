@@ -250,11 +250,11 @@ def create_app(config_class=ProductionConfig):
         ##########################################################
 
 
-    @app.route('/random-dog')
+    @app.route('/api/random-dog')
     def random_dog():
             try:
                 # Call the model function to get a random dog image URL
-                dog_image_url = Team.get_random_dog_image()
+                dog_image_url = get_random_dog_image()
                 return jsonify({"dog_image_url": dog_image_url})
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
@@ -435,7 +435,7 @@ def create_app(config_class=ProductionConfig):
                 app.logger.info(f"Updating stats for team ID: {team_id} with result: {result}")
 
                 # Call the update_team_stats function to update the stats
-                Team.update_team_stats(team_id, result)
+                update_team_stats(team_id, result)
                 return make_response(jsonify({'status': 'success', 'team_id': team_id, 'result': result}), 200)
 
             except ValueError as e:
@@ -447,11 +447,11 @@ def create_app(config_class=ProductionConfig):
                 return make_response(jsonify({'error': 'Internal server error'}), 500)
 
             
-            ##########################################################
-            #
-            # Game
-            #
-            ##########################################################
+##########################################################
+#
+# Game
+#
+##########################################################
 
 
 
@@ -465,10 +465,10 @@ def create_app(config_class=ProductionConfig):
             if not team_id:
                 return make_response(jsonify({'error': 'Team ID is required'}), 400)
 
-            team = Team.get_team_by_id(team_id)
+            team = get_team_by_id(team_id)
             game_model.prep_opponent(team)
 
-            return make_response(jsonify({'status': 'success', 'team': team.name}), 200)
+            return make_response(jsonify({'status': 'success', 'team': team.team}), 200)
         except ValueError as e:
             return make_response(jsonify({'error': str(e)}), 400)
         except Exception as e:

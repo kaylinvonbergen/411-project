@@ -137,6 +137,28 @@ logout_user() {
 #
 ##############################################
 
+
+random_dog_smoke_test() {
+  echo "Testing random-dog route..."
+
+  # Send a GET request to the /random-dog endpoint
+  response=$(curl -s -X GET "$BASE_URL/random-dog")
+
+  # Check if the response contains a valid dog_image_url
+  if echo "$response" | grep -q '"dog_image_url":'; then
+    echo "Random dog image URL received successfully."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Random Dog Response JSON:"
+      echo "$response" | jq .
+    fi
+  else
+    echo "Failed to retrieve random dog image."
+    echo "Response: $response"
+    exit 1
+  fi
+}
+
+
 # Function to add a team (combatant)
 create_team() {
   team=$1
@@ -220,17 +242,121 @@ get_team_by_id() {
 }
 
 
+update_team_stats() {
+  team_id=$1
+  result=$2
+
+  echo "Testing update-team-stats for team ID ($team_id) with result ($result)..."
+
+  # Send a POST request to the API to update the team stats
+  response=$(curl -s -X POST "$BASE_URL/update-team-stats/$team_id" -H "Content-Type: application/json" -d "{\"result\":\"$result\"}")
+
+  # Check if the response contains the success status
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Team stats updated successfully for team ID ($team_id) with result ($result)."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Update Response JSON:"
+      echo "$response" | jq .
+    fi
+  else
+    echo "Failed to update team stats for team ID ($team_id)."
+    echo "Response: $response"
+    exit 1
+  fi
+}
+
+# game stuff
+
+# Function to perform a smoke test for the /api/add-opponent route
+add_opponent() {
+  team_id=$1  # The team_id to be added as an opponent
+
+  echo "Testing /api/add-opponent with team_id ($team_id)..."
+
+  # Prepare the JSON payload
+  json_payload="{\"team_id\":$team_id}"
+
+  # Send a POST request to the /api/add-opponent route
+  response=$(curl -s -X POST "$BASE_URL/add-opponent" -H "Content-Type: application/json" -d "$json_payload")
+
+  # Check if the response contains a success status
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Opponent added successfully for team ID ($team_id)."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Add Opponent Response JSON:"
+      echo "$response" | jq .
+    fi
+  else
+    echo "Failed to add opponent for team ID ($team_id)."
+    echo "Response: $response"
+    exit 1
+  fi
+}
+
+clear_opponents() {
+  echo "Testing clear_opponents method..."
+
+  # Send a request to trigger the clear_opponents method (if it's exposed via an API)
+  response=$(curl -s -X POST "$BASE_URL/clear-opponents")
+
+  # Check if the opponents list is now empty (assuming there's a way to check the list, e.g., an endpoint)
+  response=$(curl -s -X GET "$BASE_URL/get-opponents")
+
+  if echo "$response" | grep -q '"opponents": \[\]'; then
+    echo "Opponents list cleared successfully."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Clear Opponents Response JSON:"
+      echo "$response" | jq .
+    fi
+  else
+    echo "Failed to clear opponents list."
+    echo "Response: $response"
+    exit 1
+  fi
+}
+
+
+
+# Function to perform a smoke test for the /api/start-game route
+start_game() {
+  echo "Testing /api/start-game..."
+
+  # Send a POST request to the /api/start-game route
+  response=$(curl -s -X POST "$BASE_URL/start-game")
+
+  # Check if the response contains a success status and the expected result message
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Game started successfully."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Start Game Response JSON:"
+      echo "$response" | jq .
+    fi
+  else
+    echo "Failed to start the game."
+    echo "Response: $response"
+    exit 1
+  fi
+}
+
 
 
 check_health
 check_db
 init_db
+random_dog_smoke_test
 create_user
 login_user
 create_team "peebo" 1
 delete_team 1
 clear_teams
 create_team "gorp" 3
+create_team "boing" 7
 get_team_by_name "gorp"
 get_team_by_id 1
+update_team_stats 1 "win"
+clear_opponents
+add_opponent 1
+add_opponent 2
+start_game
+
 

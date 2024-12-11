@@ -294,7 +294,7 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
 - **Purpose:** Add a new team to database
 - **Request Body:**
    - `team` (String): The name of the team.
-   - `favorite category` (integer): ID of the team's favorite integer
+   - `favorite category` (integer): ID of the team's favorite category
 - **Response Format:**
     - Success Response Example:
         - Code: 201
@@ -321,5 +321,31 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
     {
    "status": "success",
    "team": "Team A"
+    }
+    ```
+#### Route: /api/delete-team/int:team_id
+- **Request Type:** `DELETE`
+- **Purpose:** Soft delete a team by its ID
+- **Request Body:**
+   - `team_id` (integer): ID of the team to delete
+- **Response Format:**
+    - Success Response Example:
+        - Code: 200
+        - Content:
+            ```json
+            {
+               "status": "success"
+            }
+            ```           
+- **Example Request:**
+    ```bash
+    
+    curl -X DELETE http://localhost:5000/api/delete-team/1
+    
+    ```
+- **Example Response:**
+    ```json
+    {
+   "status": "success",
     }
     ```

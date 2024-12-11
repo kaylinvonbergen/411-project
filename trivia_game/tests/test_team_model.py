@@ -451,3 +451,4 @@ def test_update_team_stats_database_error(mock_cursor):
 
     # Ensure that the SQL query to check deletion status was executed
     mock_cursor.execute.assert_called_once_with("SELECT deleted FROM teams WHERE id = ?", (1,))
+

@@ -139,20 +139,21 @@ logout_user() {
 
 # Function to add a team (combatant)
 create_team() {
-
-  echo "Clearing the database before testing..."
+  team=$1
+  favorite_category=$2
 
   echo "Adding a team..."
+  
+  # Make the API call and store the response
   response=$(curl -s -X POST "$BASE_URL/create-team" -H "Content-Type: application/json" \
-    -d '{"team":"TeamName", "favorite_category":1}')
-  
-  
+   -d "{\"team\":\"$team\", \"favorite_category\":$favorite_category}")
+   
+  # Check if the response contains the success status
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Team added successfully."
   else
     echo "Failed to add team."
-    echo "Error Response JSON:"
-    echo "$response" | jq .  # Print the full error response
+    echo "Response: $response"
     exit 1
   fi
 }
@@ -177,11 +178,27 @@ delete_team() {
 clear_teams() {
   echo "Clearing meals from database..."
 
-  curl -s -X DELETE "$BASE_URL/clear-meals" | grep -q '"status": "success"'
+  curl -s -X DELETE "$BASE_URL/clear-teams" | grep -q '"status": "success"'
 }
 
 
+get_team_by_name() {
+  team=$1
 
+  echo "Getting meal by name ($team)..."
+  response=$(curl -s -X GET "$BASE_URL/get-team-by-name/$team")
+
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Team retrieved successfully by team ($team)."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Team JSON (Name $team):"
+      echo "$response" | jq .
+    fi
+  else
+    echo "Failed to get team by name ($team)."
+    exit 1
+  fi
+}
 
 
 
@@ -191,7 +208,7 @@ check_db
 init_db
 create_user
 login_user
-create_team
+create_team "peebo" 1
 delete_team 1
 clear_teams
 

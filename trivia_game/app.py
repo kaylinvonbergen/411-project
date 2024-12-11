@@ -41,7 +41,7 @@ def create_app(config_class=ProductionConfig):
     @app.route('/api/db-check', methods=['GET'])
     def db_check() -> Response:
         """
-        Route to check if the database connection and meals table are functional.
+        Route to check if the database connection and teams table are functional.
 
         Returns:
             JSON response indicating the database health status.
@@ -334,7 +334,7 @@ def create_app(config_class=ProductionConfig):
             return make_response(jsonify({'error': 'Internal server error'}), 500)
 
 
-    @app.route('/api/clear-meals', methods=['DELETE'])
+    @app.route('/api/clear-teams', methods=['DELETE'])
     def clear_catalog() -> Response:
         """
         Route to clear all teams (recreates the table).
@@ -344,7 +344,7 @@ def create_app(config_class=ProductionConfig):
         """
         try:
             app.logger.info("Clearing the teams")
-            clear_meals()
+            clear_teams()
             return make_response(jsonify({'status': 'success'}), 200)
         except Exception as e:
             app.logger.error(f"Error clearing catalog: {e}")

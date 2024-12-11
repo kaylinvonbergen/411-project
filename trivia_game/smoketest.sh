@@ -174,7 +174,7 @@ delete_team() {
 }
 
 
-clear_meals() {
+clear_teams() {
   echo "Clearing meals from database..."
 
   curl -s -X DELETE "$BASE_URL/clear-meals" | grep -q '"status": "success"'
@@ -193,6 +193,6 @@ create_user
 login_user
 create_team
 delete_team 1
-clear_meals
+clear_teams
 
 

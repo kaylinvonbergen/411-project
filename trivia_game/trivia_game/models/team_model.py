@@ -158,9 +158,9 @@ def create_team(team: str, favorite_category: int) -> None:
         raise e
 
 
-def clear_meals() -> None:
+def clear_teams() -> None:
     """
-    Recreates the meals table, effectively deleting all meals.
+    Recreates the teams table, effectively deleting all teams.
 
     Raises:
         sqlite3.Error: If any database error occurs.

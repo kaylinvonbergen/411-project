@@ -17,14 +17,14 @@ configure_logger(logger)
 class Team:
     """
         
-        Represents a team and its associated attributes, including id, team, and favorite category
+        Represents a team and its associated attributes, inlcuding id, team, and favorite category
 
         Attributes:
         id (int): The id of the team 
         team (str): The string name of the team 
         favorite_category (int): The ID of the team's favorite category
         games_played (int): number of games the team has played 
-        total_score (int): cumulative team score
+        total_score (int): cummulative team score
         current_score (int): team's score in current game 
         mascot (str): url to team mascot 
     
@@ -143,9 +143,9 @@ def create_team(team: str, favorite_category: int) -> None:
             logger.info("Database connection established successfully.")
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO teams (team, favorite_category, mascot, games_played, total_score, current_score)
-                # VALUES (?, ?, ?, ?, ?, ?)
-            """, (team, favorite_category, mascot_image_url, 0, 0, 0))
+                INSERT INTO teams (team, favorite_category, mascot)
+                VALUES (?, ?, ?)
+            """, (team, favorite_category, mascot_image_url))
             conn.commit()
             logger.info("Team successfully added to the database: %s", team)
 
@@ -215,7 +215,7 @@ def delete_team(id: int) -> None:
             logger.error("Database error: %s", str(e))
             raise e
         
-
+@staticmethod
 def get_team_by_id(team_id: int):
         """
         Retrieves a team from the database by its team id 
@@ -304,7 +304,7 @@ def get_team_by_name(team: str):
             raise e
 
 
-
+@staticmethod
 def update_team_stats(team_id: int, result: str) -> None:
         """
         Updates the statistics of a given team based on game results 
@@ -346,4 +346,3 @@ def update_team_stats(team_id: int, result: str) -> None:
         except sqlite3.Error as e:
             logger.error("Database error: %s", str(e))
             raise e
-

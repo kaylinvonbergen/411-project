@@ -1,348 +1,453 @@
-from dataclasses import dataclass
-import logging
-import os
+from contextlib import contextmanager
+from unittest.mock import MagicMock, patch
+import pytest
 import sqlite3
-from typing import Any
 import requests
+from trivia_game.models.team_model import (
+    Team,
+    create_team, 
+    delete_team, 
+    get_team_by_id, 
+    get_team_by_name,
+    get_random_dog_image,
+    update_team_stats,
+    fetch_trivia_categories
+)
 
-from trivia_game.utils.sql_utils import get_db_connection
-from trivia_game.utils.logger import configure_logger
+def normalize_whitespace(sql):
+    return " ".join(sql.split())
+
+@pytest.fixture
+def mock_cursor(mocker):
+    mock_conn = mocker.Mock()
+    mock_cursor = mocker.Mock()
+
+    # Mock the connection's cursor
+    mock_conn.cursor.return_value = mock_cursor
+    mock_cursor.fetchone.return_value = None  # Default return for queries
+    mock_cursor.fetchall.return_value = []
+    mock_conn.commit.return_value = None
+
+    # Mock the get_db_connection context manager from sql_utils
+    @contextmanager
+    def mock_get_db_connection():
+        yield mock_conn  # Yield the mocked connection object
+
+    mocker.patch("trivia_game.models.team_model.get_db_connection", mock_get_db_connection)
+
+    return mock_cursor
 
 
-logger = logging.getLogger(__name__)
-configure_logger(logger)
 
+# Test for successful image fetch
+@patch('requests.get')  # Mock 'requests.get'
+def test_get_random_dog_image_success(mock_get):
+    # Define the mock response data
+    mock_response = {
+        'message': 'https://dog.ceo/dog-api/images/random/dog.jpg'
+    }
 
-@dataclass
-class Team:
-    """
-        
-        Represents a team and its associated attributes, inlcuding id, team, and favorite category
+    # Set up the mock to return a response with a status code of 200 and the mock data
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = mock_response
 
-        Attributes:
-        id (int): The id of the team 
-        team (str): The string name of the team 
-        favorite_category (int): The ID of the team's favorite category
-        games_played (int): number of games the team has played 
-        total_score (int): cummulative team score
-        current_score (int): team's score in current game 
-        mascot (str): url to team mascot 
+    # Call the function
+    result = get_random_dog_image()
+
+    # Assert that the returned URL matches the mock response
+    assert result == mock_response['message']
+
+# Test for failure (network error or exception)
+@patch('requests.get')  # Mock 'requests.get'
+def test_get_random_dog_image_failure(mock_get):
+    # Simulate an error (e.g., network issue or bad status code)
+    mock_get.side_effect = requests.RequestException("Network error")
+
+    # Call the function (it should fallback to the default image URL)
+    result = get_random_dog_image()
+
+    # Assert that the fallback image URL is returned
+    assert result == "https://images.dog.ceo/breeds/shiba/shiba-16.jpg"  # Correct fallback URL
+
+@patch("requests.get")
+def test_fetch_trivia_categories(mock_get):
+    """Test fetching trivia categories."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "trivia_categories": [
+            {"id": 1, "name": "Category 1"},
+            {"id": 2, "name": "Category 2"}
+        ]
+    }
+    mock_response.raise_for_status = MagicMock()
+    mock_get.return_value = mock_response
+
+    # Call the standalone function
+    categories = fetch_trivia_categories()
     
-    """
+    # Assertions
+    assert len(categories) == 2, "Expected 2 categories"
+    assert categories[0]["name"] == "Category 1", "Expected category name to be 'Category 1'"
+    assert categories[1]["name"] == "Category 2", "Expected category name to be 'Category 2'"
 
-    id: int
-    team: str
-    favorite_category: int
-    games_played: int
-    total_score: int
-    current_score: int
-    mascot: str
+@patch("trivia_game.models.team_model.get_random_dog_image")
+@patch("trivia_game.models.team_model.get_db_connection")
+def test_create_team(mock_get_db_connection, mock_get_random_dog_image):
+    """Test creating a new team in the team model."""
 
+    # Mock the dog image URL returned by get_random_dog_image
+    mock_get_random_dog_image.return_value = "https://example.com/dog.jpg"
 
+    # Mock the database connection and cursor
+    mock_conn = mock_get_db_connection.return_value
+    mock_cursor = mock_conn.cursor.return_value
 
-def get_random_dog_image() -> str:
-    """
-        Fetch a random dog image URL from the Dog CEO API.
-        
-        Raises: 
-            RequestException: if there is an error fetching the dog image
-    """
-        
+    # Set up the context manager behavior
+    mock_get_db_connection.return_value.__enter__.return_value = mock_conn
 
-    try:
-            # Fetch that dog! ( fetch random dog image from api )
-        response = requests.get("https://dog.ceo/api/breeds/image/random")
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        data = response.json()
-        return data['message']  # Return the URL of the dog image
-        
+    # Call the function to create a new team
+    create_team("Test Team", 1)
 
-    except Exception as e:
-        logger.error("Error fetching dog image: %s", e)
-        return "https://images.dog.ceo/breeds/shiba/shiba-16.jpg"  # Fallback in case of error
+    # Ensure execute was called
+    assert mock_cursor.execute.call_args is not None, "Expected execute to be called on the mock cursor."
 
+    # Extract the actual SQL query
+    actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
 
-def fetch_trivia_categories() -> list[dict[str, Any]]:
-    """
-    Fetch an exhaustive list of trivia categories from the OpenTDB API.
+    # Define the expected SQL query
+    expected_query = normalize_whitespace("""
+        INSERT INTO teams (team, favorite_category, mascot)
+        VALUES (?, ?, ?)
+    """)
 
-    Returns:
-        list[dict[str, Any]]: A list of categories, each with an 'id' and 'name'.
+    # Assert the SQL query matches
+    assert actual_query == expected_query, "The SQL query did not match the expected structure."
 
-    Raises:
-        RuntimeError: If there is an error fetching categories from the API.
-    """
-    try:
-        logger.info("Fetching trivia categories from the OpenTDB API.")
-        response = requests.get("https://opentdb.com/api_category.php")
-        response.raise_for_status()
-        data = response.json()
-        logger.info("Successfully fetched trivia categories.")
-        return data.get("trivia_categories", [])
-    except requests.exceptions.RequestException as e:
-        logger.error("Failed to fetch trivia categories: %s", str(e))
-        raise RuntimeError(f"Failed to fetch trivia categories: {e}")
-                
-def update_favorite_category(Team) -> None:
-        """
-        Prompt the user to select a single favorite category for the team.
-        Updates the `favorite_category` attribute.
-        """
-        try:
-            categories = fetch_trivia_categories()
-            if not categories:
-                logger.warning("No categories available to choose from.")
-                print("No categories available.")
-                return
+    # Extract and verify the arguments
+    actual_arguments = mock_cursor.execute.call_args[0][1]
+    expected_arguments = ("Test Team", 1, "https://example.com/dog.jpg")
+    assert actual_arguments == expected_arguments, (
+        f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
+    )
 
-            # Display the categories
-            logger.info("Displaying available trivia categories to the user.")
-            print("Available Categories:")
-            for category in categories:
-                print(f"ID: {category['id']} - Name: {category['name']}")
+@patch("trivia_game.models.team_model.get_db_connection")
+@patch("trivia_game.models.team_model.get_random_dog_image")
+def test_create_team_duplicate(mock_get_random_dog_image, mock_get_db_connection):
+    """Test handling of duplicate team creation."""
+    # Mock the dog image URL returned by get_random_dog_image
+    mock_get_random_dog_image.return_value = "https://example.com/dog.jpg"
 
-            # User selects a favorite category
-            while True:
-                try:
-                    category_id = int(input("Enter the ID of your favorite category: "))
-                    category_ids = {cat["id"] for cat in categories}
-                    if category_id not in category_ids:
-                        print(f"Invalid category ID {category_id}. Please try again.")
-                        logger.warning("User entered an invalid category ID: %s", category_id)
-                        continue
+    # Mock the database connection and cursor
+    mock_conn = mock_get_db_connection.return_value
+    mock_cursor = mock_conn.cursor.return_value
 
-                    # Update the favorite category
-                    Team.favorite_category = category_id
-                    print(f"Favorite category updated to ID {category_id}.")
-                    logger.info("Favorite category updated to ID %s.", category_id)
-                    break
-                except ValueError:
-                    print("Invalid input. Please enter a valid category ID.")
-                    logger.warning("User entered an invalid input (non-integer).")
+    # Set up the context manager behavior
+    mock_get_db_connection.return_value.__enter__.return_value = mock_conn
 
-        except RuntimeError as e:
-            print("Error fetching trivia categories.")
-            logger.error("Error in fetching categories: %s", str(e))
+    # Simulate a duplicate team insertion by raising sqlite3.IntegrityError
+    mock_cursor.execute.side_effect = sqlite3.IntegrityError
 
-def create_team(team: str, favorite_category: int) -> None:
-    """
-    Adds a new team with specified details to the database.
+    # Attempt to create a duplicate team and check for the raised ValueError
+    with pytest.raises(ValueError) as excinfo:
+        create_team("Test Team", 1)
 
-    Args:
-    team (str): The string name of the team.
-    favorite_category (int): The ID of the team's favorite category.
+    # Verify the error message
+    assert str(excinfo.value) == "Team with name 'Test Team' already exists"
 
-    Raises:
-        ValueError: If another team with this name already exists.
-        sqlite3.Error: If any database error occurs.
-    """
-    try:
-        mascot_image_url = get_random_dog_image()
+    # Ensure `execute` was called with the expected SQL query
+    actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
+    expected_query = normalize_whitespace("""
+        INSERT INTO teams (team, favorite_category, mascot)
+        VALUES (?, ?, ?)
+    """)
+    assert actual_query == expected_query, "The SQL query did not match the expected structure."
 
-        with get_db_connection() as conn:
-            logger.info("Database connection established successfully.")
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO teams (team, favorite_category, mascot)
-                VALUES (?, ?, ?)
-            """, (team, favorite_category, mascot_image_url))
-            conn.commit()
-            logger.info("Team successfully added to the database: %s", team)
+    # Extract and verify the arguments passed to `execute`
+    actual_arguments = mock_cursor.execute.call_args[0][1]
+    expected_arguments = ("Test Team", 1, "https://example.com/dog.jpg")
+    assert actual_arguments == expected_arguments, (
+        f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
+    )
 
-    except sqlite3.IntegrityError:
-        logger.error("Duplicate team: %s", team)
-        raise ValueError(f"Team with name '{team}' already exists")
+@patch("trivia_game.models.team_model.get_db_connection")
+def test_delete_team(mock_get_db_connection):
+    """Test soft deleting a team from the catalog by team ID."""
+    # Mock the database connection and cursor
+    mock_conn = mock_get_db_connection.return_value
+    mock_cursor = mock_conn.cursor.return_value
 
-    except sqlite3.Error as e:
-        logger.error("Database error: %s", str(e))
-        raise e
+    # Set up the context manager behavior
+    mock_get_db_connection.return_value.__enter__.return_value = mock_conn
 
+    # Simulate fetching the deleted status of a team
+    mock_cursor.execute.return_value = None
+    mock_cursor.fetchone.return_value = (False,)
 
-def clear_teams() -> None:
-    """
-    Recreates the teams table, effectively deleting all teams.
+    # Call the function to delete a team
+    team_id = 1
+    delete_team(team_id)
 
-    Raises:
-        sqlite3.Error: If any database error occurs.
-    """
-    try:
-        print("SQL_CREATE_TABLE_PATH:", os.getenv("SQL_CREATE_TABLE_PATH"))
-        with open(os.getenv("SQL_CREATE_TABLE_PATH", "sql/create_team_table.sql"), "r") as fh:
-            create_table_script = fh.read()
-        with get_db_connection() as conn:
-            cursor = conn.cursor()
-            cursor.executescript(create_table_script)
-            conn.commit()
+    # Ensure `execute` was called with the correct SQL to check deletion status
+    check_query = normalize_whitespace(mock_cursor.execute.call_args_list[0][0][0])
+    expected_check_query = normalize_whitespace("SELECT deleted FROM teams WHERE id = ?")
+    assert check_query == expected_check_query, "The SQL query for checking deletion status did not match."
 
-            logger.info("Teams cleared successfully.")
+    # Ensure `execute` was called with the correct SQL to mark as deleted
+    delete_query = normalize_whitespace(mock_cursor.execute.call_args_list[1][0][0])
+    expected_delete_query = normalize_whitespace("UPDATE teams SET deleted = TRUE WHERE id = ?")
+    assert delete_query == expected_delete_query, "The SQL query for marking as deleted did not match."
 
-    except sqlite3.Error as e:
-        logger.error("Database error while clearing teams: %s", str(e))
-        raise e    
+    # Verify the arguments passed to the update query
+    delete_arguments = mock_cursor.execute.call_args_list[1][0][1]
+    assert delete_arguments == (team_id,), f"Expected arguments {(team_id,)}, got {delete_arguments}."
 
+    # Ensure commit was called
+    assert mock_conn.commit.called, "Expected `commit` to be called on the connection."
 
-def delete_team(id: int) -> None:
-        """
-        Marks a team as deleted in the database, sets 'deleted' flag to True
+@patch("trivia_game.models.team_model.get_db_connection")
+def test_delete_team_bad_id(mock_get_db_connection):
+    """Test error when trying to delete a non-existent team."""
+    # Mock the database connection and cursor
+    mock_conn = mock_get_db_connection.return_value
+    mock_cursor = mock_conn.cursor.return_value
 
-        Args:
-            team_id (int): The unique id of the team to be deleted
+    # Set up the context manager behavior
+    mock_get_db_connection.return_value.__enter__.return_value = mock_conn
 
-        Raises:
-            ValueError: if the team has either already been deleted or a team with the 'team_id' does not exist 
-            sqlite3.Error: If any database error occurs.
-        """
-        try:
-            with get_db_connection() as conn:
-                logger.info("Database connection established successfully.")
-                cursor = conn.cursor()
-                cursor.execute("SELECT deleted FROM teams WHERE id = ?", (id,))
-                try:
-                    deleted = cursor.fetchone()[0]
-                    if deleted:
-                        logger.info("Team with ID %s has already been deleted", id)
-                        raise ValueError(f"Team with ID {id} has been deleted")
-                except TypeError:
-                    logger.info("Team with ID %s not found", id)
-                    raise ValueError(f"Team with ID {id} not found")
+    # Simulate no team found for the given ID
+    mock_cursor.execute.return_value = None
+    mock_cursor.fetchone.return_value = None
 
-                cursor.execute("UPDATE teams SET deleted = TRUE WHERE id = ?", (id,))
-                conn.commit()
+    # Call the function to delete a non-existent team and check for the raised ValueError
+    team_id = 99
+    with pytest.raises(ValueError) as excinfo:
+        delete_team(team_id)
 
-                logger.info("Team with ID %s marked as deleted.", id)
+    assert str(excinfo.value) == f"Team with ID {team_id} not found", "Expected ValueError for non-existent team ID."
 
-        except sqlite3.Error as e:
-            logger.error("Database error: %s", str(e))
-            raise e
-        
-@staticmethod
-def get_team_by_id(team_id: int):
-        """
-        Retrieves a team from the database by its team id 
+@patch("trivia_game.models.team_model.get_db_connection")
+def test_delete_team_already_deleted(mock_get_db_connection):
+    """Test error when trying to delete a team that's already marked as deleted."""
+    # Mock the database connection and cursor
+    mock_conn = mock_get_db_connection.return_value
+    mock_cursor = mock_conn.cursor.return_value
 
-        Args:
-            team_id (int): The unique id of the team to be retrieved 
+    # Set up the context manager behavior
+    mock_get_db_connection.return_value.__enter__.return_value = mock_conn
 
-        Returns: 
-            Team: The team class instance asscoiated with the 'team_id' given
+    # Simulate fetching a team that's already marked as deleted
+    mock_cursor.execute.return_value = None
+    mock_cursor.fetchone.return_value = (True,)
 
-        Raises: 
-            ValueError: If the team is marked as deleted or no team exists with the given 'team_id'
-            sqlite3.Error: If any database error occurs.
+    # Call the function to delete an already deleted team and check for the raised ValueError
+    team_id = 2
+    with pytest.raises(ValueError) as excinfo:
+        delete_team(team_id)
 
-        """
-
-        try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT id, team, favorite_category, mascot, deleted, current_score, games_played, total_score FROM teams WHERE id = ?", (team_id,))
-                row = cursor.fetchone()
-
-                if row:
-                    if row[4]:
-                        logger.info("Team with id %s has been deleted", id)
-                        raise ValueError(f"Team with name {id} has been deleted")
-                    return Team(
-                    id=row[0], 
-                    team=row[1], 
-                    favorite_category=row[2], 
-                    mascot=row[3],  
-                    current_score=row[5], 
-                    games_played=row[6], 
-                    total_score=row[7]
-                )
-                else:
-                    logger.info("Team with ID %s not found", team_id)
-                    raise ValueError(f"Team with ID {team_id} not found")
-
-        except sqlite3.Error as e:
-            logger.error("Database error: %s", str(e))
-            raise e
-
-@staticmethod
-def get_team_by_name(team: str):
-        """
-        Retrieves a team from the database based on the given team name
-
-        Args:
-            team (str): The team of the team to be retrieved 
-
-        Returns:
-            Team: The team class instance asscoiated with the 'team_id' given
-
-        Raises: 
-            ValueError: If the team is marked as deleted or no team exists with the given name 
-            sqlite3.Error: If any database error occurs.
-
-        """
-
-        try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT id, team, favorite_category, mascot, deleted, current_score, games_played, total_score FROM teams WHERE team = ?", (team,))
-                row = cursor.fetchone()
-
-                if row:
-                    if row[4]:
-                        logger.info("Team with name %s has been deleted", team)
-                        raise ValueError(f"Team with name {team} has been deleted")
-                    return Team(
-                    id=row[0], 
-                    team=row[1], 
-                    favorite_category=row[2], 
-                    mascot=row[3],  
-                    current_score=row[5], 
-                    games_played=row[6], 
-                    total_score=row[7]
-                )
-                else:
-                    logger.info("Team with name %s not found", team)
-                    raise ValueError(f"Team with name {team} not found")
-
-        except sqlite3.Error as e:
-            logger.error("Database error: %s", str(e))
-            raise e
+    assert str(excinfo.value) == f"Team with ID {team_id} has been deleted", "Expected ValueError for already deleted team."
 
 
-@staticmethod
-def update_team_stats(team_id: int, result: str) -> None:
-        """
-        Updates the statistics of a given team based on game results 
+def test_get_team_by_id(mock_cursor):
+    mock_cursor.fetchone.return_value = (7, "Team A", 1, "https://example.com/dog.jpg", False, 200, 100, 10)
 
-        Args: 
-            team_id (int): The unique id of the team to be updated 
-            result (str): The result of the game (either 'win' or 'loss')
+    # Call the function and check the result
+    result = get_team_by_id(7)
 
-        Raises:
-            ValueError: If the team is marked as deleted, if there is no team with the given id, 
-                or the result is not 'win' or 'loss' 
-            sqlite3.Error: If any database error occurs.
+    # Expected result based on the simulated fetchone return value
+    expected_result = Team(7, "Team A", 1, 100, 10, 200,"https://example.com/dog.jpg")
+
+    # Ensure the result matches the expected output
+    assert result == expected_result, f"Expected {expected_result}, got {result}"
+
+    # Ensure the SQL query was executed correctly
+    expected_query = normalize_whitespace("SELECT id, team, favorite_category, mascot, deleted, current_score, games_played, total_score FROM teams WHERE id = ?")
+    actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
+
+    # Assert that the SQL query was correct
+    assert actual_query == expected_query, "The SQL query did not match the expected structure."
+
+    # Extract the arguments used in the SQL call
+    actual_arguments = mock_cursor.execute.call_args[0][1]
+
+    # Assert that the SQL query was executed with the correct arguments
+    expected_arguments = (7,)
+    assert actual_arguments == expected_arguments, f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
+
+
+@patch("trivia_game.models.team_model.get_db_connection")
+def test_get_team_by_id_bad_id(mock_get_db_connection):
+    # Mock the database connection and cursor
+    mock_cursor = mock_get_db_connection.return_value.cursor.return_value
+    mock_cursor.fetchone.return_value = None  # Simulate no record found
+
+    # Expect a ValueError when attempting to fetch a non-existent team
+    with pytest.raises(ValueError):
+        get_team_by_id(999)
 
 
 
-        """
-        try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT deleted FROM teams WHERE id = ?", (team_id,))
-                try:
-                    deleted = cursor.fetchone()[0]
-                    if deleted:
-                        logger.info("Team with ID %s has been deleted", team_id)
-                        raise ValueError(f"Team with ID {team_id} has been deleted")
-                except TypeError:
-                    logger.info("Team with ID %s not found", team_id)
-                    raise ValueError(f"Team with ID {team_id} not found")
 
-                if result == 'win':
-                    cursor.execute("UPDATE teams SET games_played = games_played + 1, total_score = total_score + 1 WHERE id = ?", (team_id,))
-                elif result == 'loss':
-                    cursor.execute("UPDATE teams SET games_played = games_played + 1 WHERE id = ?", (team_id,))
-                else:
-                    raise ValueError(f"Invalid result: {result}. Expected 'win' or 'loss'.")
+@patch("trivia_game.models.team_model.get_db_connection")
+def test_get_team_by_name(mock_get_db_connection):
+    """Test retrieving a team by its name."""
+    # Mock the database connection and cursor
+    mock_conn = mock_get_db_connection.return_value
+    mock_cursor = mock_conn.cursor.return_value
 
-                conn.commit()
+    # Set up the context manager behavior
+    mock_get_db_connection.return_value.__enter__.return_value = mock_conn
 
-        except sqlite3.Error as e:
-            logger.error("Database error: %s", str(e))
-            raise e
+    # Simulate fetching a team by name
+    team_name = "Test Team"
+    mock_cursor.execute.return_value = None
+    mock_cursor.fetchone.return_value = (1, "Test Team", 1, "https://example.com/dog.jpg", False, 10, 50, 5)
+
+    team = get_team_by_name(team_name)
+
+    # Verify the returned team attributes
+    assert team.id == 1
+    assert team.team == "Test Team"
+    assert team.favorite_category == 1
+    assert team.current_score == 10
+    assert team.games_played == 50
+    assert team.total_score == 5
+    assert team.mascot == "https://example.com/dog.jpg"
+
+    # Ensure the correct SQL was executed
+    query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
+    expected_query = normalize_whitespace("SELECT id, team, favorite_category, mascot, deleted, current_score, games_played, total_score FROM teams WHERE team = ?")
+    assert query == expected_query, "The SQL query did not match the expected structure."
+
+@patch("trivia_game.models.team_model.get_db_connection")
+def test_get_team_by_id_bad_name(mock_get_db_connection):
+    """Test error when retrieving a non-existent team by name."""
+    # Mock the database connection and cursor
+    mock_conn = mock_get_db_connection.return_value
+    mock_cursor = mock_conn.cursor.return_value
+
+    # Set up the context manager behavior
+    mock_get_db_connection.return_value.__enter__.return_value = mock_conn
+
+    # Simulate no team found for the given name
+    team_name = "Nonexistent Team"
+    mock_cursor.execute.return_value = None
+    mock_cursor.fetchone.return_value = None
+
+    with pytest.raises(ValueError) as excinfo:
+        get_team_by_name(team_name)
+
+    assert str(excinfo.value) == f"Team with name {team_name} not found", "Expected ValueError for non-existent team name."
+
+def test_update_team_stats_win(mock_cursor):
+    """Test updating team stats for a win."""
+
+    # Simulate that the team exists and is not deleted (team_id = 1)
+    mock_cursor.fetchone.return_value = [False]
+
+    # Call the update_team_stats function with a sample team ID and result
+    team_id = 1
+    update_team_stats(team_id, "win")
+
+    # Normalize the expected SQL query
+    expected_query = normalize_whitespace("""
+        UPDATE teams SET games_played = games_played + 1, total_score = total_score + 1 WHERE id = ?
+    """)
+
+    # Ensure the SQL query was executed correctly
+    actual_query = normalize_whitespace(mock_cursor.execute.call_args_list[1][0][0])
+
+    # Assert that the SQL query matches the expected structure
+    assert actual_query == expected_query, "The SQL query did not match the expected structure."
+
+    # Extract the arguments used in the SQL call
+    actual_arguments = mock_cursor.execute.call_args_list[1][0][1]
+
+    # Assert that the SQL query was executed with the correct arguments (team ID)
+    expected_arguments = (team_id,)
+    assert actual_arguments == expected_arguments, f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
+
+def test_update_team_stats_loss(mock_cursor):
+    """Test updating team stats for a loss."""
+
+    # Simulate that the team exists and is not deleted (team_id = 1)
+    mock_cursor.fetchone.return_value = [False]
+
+    # Call the update_team_stats function with a sample team ID and result
+    team_id = 1
+    update_team_stats(team_id, "loss")
+
+    # Normalize the expected SQL query
+    expected_query = normalize_whitespace("""
+        UPDATE teams SET games_played = games_played + 1 WHERE id = ?
+    """)
+
+    # Ensure the SQL query was executed correctly
+    actual_query = normalize_whitespace(mock_cursor.execute.call_args_list[1][0][0])
+
+    # Assert that the SQL query matches the expected structure
+    assert actual_query == expected_query, "The SQL query did not match the expected structure."
+
+    # Extract the arguments used in the SQL call
+    actual_arguments = mock_cursor.execute.call_args_list[1][0][1]
+
+    # Assert that the SQL query was executed with the correct arguments (team ID)
+    expected_arguments = (team_id,)
+    assert actual_arguments == expected_arguments, f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
+
+
+def test_update_team_stats_deleted_team(mock_cursor):
+    """Test error when trying to update stats for a deleted team."""
+
+    # Simulate that the team exists but is marked as deleted (team_id = 1)
+    mock_cursor.fetchone.return_value = [True]
+
+    # Expect a ValueError when attempting to update a deleted team
+    with pytest.raises(ValueError, match="Team with ID 1 has been deleted"):
+        update_team_stats(1, "win")
+
+    # Ensure that no SQL query for updating stats was executed
+    mock_cursor.execute.assert_called_once_with("SELECT deleted FROM teams WHERE id = ?", (1,))
+
+
+def test_update_team_stats_nonexistent_team(mock_cursor):
+    """Test error when trying to update stats for a non-existent team."""
+
+    # Simulate that the team does not exist (no row returned)
+    mock_cursor.fetchone.return_value = None
+
+    # Expect a ValueError when attempting to update a non-existent team
+    with pytest.raises(ValueError, match="Team with ID 99 not found"):
+        update_team_stats(99, "win")
+
+    # Ensure that the SQL query to check existence was executed correctly
+    mock_cursor.execute.assert_called_once_with("SELECT deleted FROM teams WHERE id = ?", (99,))
+
+def test_update_team_stats_invalid_result(mock_cursor):
+    """Test error when providing an invalid game result."""
+
+    # Simulate that the team exists and is not deleted (team_id = 1)
+    mock_cursor.fetchone.return_value = [False]
+
+    # Expect a ValueError for an invalid game result
+    with pytest.raises(ValueError, match="Invalid result: draw. Expected 'win' or 'loss'."):
+        update_team_stats(1, "draw")
+
+    # Ensure that no SQL query for updating stats was executed
+    mock_cursor.execute.assert_called_once_with("SELECT deleted FROM teams WHERE id = ?", (1,))
+
+
+def test_update_team_stats_database_error(mock_cursor):
+    """Test handling of a database error during stats update."""
+
+    # Simulate that the team exists and is not deleted (team_id = 1)
+    mock_cursor.fetchone.return_value = [False]
+
+    # Simulate a database error during execution
+    mock_cursor.execute.side_effect = sqlite3.Error("Database error")
+
+    # Expect a sqlite3.Error when attempting to update team stats
+    with pytest.raises(sqlite3.Error, match="Database error"):
+        update_team_stats(1, "win")
+
+    # Ensure that the SQL query to check deletion status was executed
+    mock_cursor.execute.assert_called_once_with("SELECT deleted FROM teams WHERE id = ?", (1,))

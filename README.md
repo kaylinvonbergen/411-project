@@ -209,4 +209,31 @@ The Trivia Game Application is a web-based platform designed to facilitate trivi
        "message": "User example_user logged out successfully."
     }
     ```
+
+#### Route: /random-dog
+- **Request Type:** `GET`
+- **Purpose:** Retrieve a random dog image URL using the Dog CEO API
+- **Request Body:**
+    - No request body or parameters required.
+- **Response Format:**
+    - Success Response Example:
+        - Code: 200
+        - Content:
+            ```json
+            {
+               "dog_image_url": "<URL of the random dog image>"
+            }
+            ```
+- **Example Request:**
+    ```bash
+    
+    curl -X GET http://localhost:5000/random-dog
+    
+    ```
+- **Example Response:**
+    ```json
+    {
+       "dog_image_url": "https://images.dog.ceo/breeds/shiba/shiba-16.jpg"
+    }
+    ```
             
